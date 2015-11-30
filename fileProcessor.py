@@ -11,6 +11,9 @@ def readFile(fileName):
     return fileMatrix
 
 def processData(fileMatrix):
+    """
+    processes contents of directory labels/* which starts out with columns [ambient_light, month, day, hour, minute] and reshapes to matrix with columns [ambient_light_1, ... , ambient_light_1440] with each row as one day. Saves dates with enough data in dateMatrix. (Removes days without enough data defined as points less than 1420)
+    """
     dataMatrix = [[]]
     dataMatrix[0].append(float(fileMatrix[0][0]) )
 
@@ -49,6 +52,10 @@ def processData(fileMatrix):
     return dataMatrix, dateMatrix
 
 def compressData(dataMatrix):
+    """
+    Takes results of processData() and reshapes into matrix with columns [avg_light from 12-2am, avg_light from 2am-4am, avg_light from 4am-6am] where each row is a day
+
+    """
     compressedMatrix = []
     for index, row in enumerate(dataMatrix[:len(dataMatrix)]):
         list1 = row[0:120]

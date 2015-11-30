@@ -22,23 +22,8 @@ def loadDictionary(fileName):
             accountDict[str(key)]= str(val)
     return accountDict
 
-def loadLabels(date, account_list):
-    fileName = 'labels/' + date + '_jyfan-office.csv'
-    anom_account_ids = []
-    if os.stat(fileName).st_size !=0:
-        with open(fileName) as a:
-            for line in a:
-                anom_account_ids.append(line.strip('\n'))
-    labels_true = []
-    for account_id in account_list:
-        if str(account_id) in anom_account_ids:
-            labels_true.append(-1)
-        else:
-            labels_true.append(0)
-    return np.asarray(labels_true)
-
 def get_anomaly_accounts(date):
-    fileName = 'labels/' + date + '_ksg-office.csv'
+    fileName = 'labels/' + date + '_jyfan-office.csv'
     anom_list = []
     with open(fileName) as a:
         for line in a:
@@ -98,7 +83,7 @@ if __name__=="__main__":
                 else:
                     labels_one_day.append(0)
                     if accountId in anomaly_accounts:
-                        labels_true.append(-2)
+                        labels_true.append(-2) # these are anomalies that DBSCAN doesn't have enough data for, and defaulted predictions to "not anomaly"
                     else:
                         labels_true.append(0)
 
