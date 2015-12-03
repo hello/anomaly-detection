@@ -10,7 +10,7 @@ from hellopy import timeit
 from pytz import timezone
 from datetime import datetime
 from datetime import timedelta
-
+import redis
 # temp
 
 from sklearn.cluster import DBSCAN
@@ -19,20 +19,31 @@ logging.config.fileConfig('logging.ini')
 logger = logging.getLogger(__name__)
 
 def main():
+
     logger.info("test")
     config = {}
     with open(sys.argv[1], 'r') as f:
         c = yaml.load(f)
         config.update(c)
 
-    
+    r = redis.Redis(**config['redis'])
+    now = datetime.now()
+    now_utc = now.replace(tzinfo=timezone('UTC'))
+    tracking_key = "%s|%s" % ("suripu-anomaly", now_utc.strftime(DATE_FORMAT))
+
+    r.sadd(tracking_key, 0)
     conn = psycopg2.connect(**config['sensors_db'])
     
     account_ids = get_active_accounts(conn)
 
     for account_id in account_ids:
+        if r.sismember(tracking_key, account_id):
+            logging.debug("Skipping account: %d since we've already seen it", account_id)
+            continue
+        
         do_something(account_id, conn, 6,3)        
-    
+        r.sadd(tracking_key, account_id)
+        
     logging.warn("DONE")
 
 

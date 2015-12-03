@@ -4,3 +4,6 @@ sensors_db:
     port: 5432
     password: hello-sensors
     dbname: sensors1
+redis:
+    host: stats.xoe7je.0001.use1.cache.amazonaws.com
+    port: 6379
