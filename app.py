@@ -50,7 +50,7 @@ def get_active_accounts(conn):
     last_night = now_utc + timedelta(days=-2)
     account_ids = set()
     with conn.cursor() as cursor:
-        cursor.execute("""SELECT COUNT(DISTINCT(account_id)) FROM tracker_motion_master WHERE local_utc_ts > %(start)s;""", dict(start=last_night))
+        cursor.execute("""SELECT DISTINCT(account_id) FROM tracker_motion_master WHERE local_utc_ts > %(start)s;""", dict(start=last_night))
 
         rows = cursor.fetchall()
         for row in rows:
