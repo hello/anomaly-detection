@@ -3,7 +3,6 @@ import logging.config
 import sys
 import yaml
 import psycopg2
-import dbscan_tim
 import os
 import numpy as np
 import itertools
