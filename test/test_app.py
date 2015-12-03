@@ -18,6 +18,15 @@ class TestFeatureExtractions(unittest.TestCase):
         self.assertEqual(1, len(features))
         self.assertEqual(2, len(features[0]))
         self.assertEqual([1,1] , features[0])
+
+    def test_feature_extraction(self):
+        dataset = {
+            'key' : [1]
+        }
+        features = feature_extraction(dataset)
+        self.assertEqual(1, len(features))
+        self.assertEqual(1, len(features[0]))
+        self.assertEqual([1] , features[0])
     
 
 
