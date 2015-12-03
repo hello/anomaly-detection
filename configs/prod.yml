@@ -1,0 +1,6 @@
+sensors_db:
+    host: sensors-2-replica-1.cdawj8qazvva.us-east-1.rds.amazonaws.com:5432
+    user: sensors
+    port: 5432
+    password: hello-sensors
+    dbname: sensors1

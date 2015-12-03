@@ -1,0 +1,8 @@
+sensors_db:
+    host: sensors2.cy7n0vzxfedi.us-east-1.redshift.amazonaws.com
+    port: 5439
+    user: user
+    password: password
+    dbname: sensors1
+
+
