@@ -1,6 +1,7 @@
 import unittest
 from app import feature_extraction
-
+from app import normalize_data
+import math
 
 class TestFeatureExtractions(unittest.TestCase):
 
@@ -18,6 +19,15 @@ class TestFeatureExtractions(unittest.TestCase):
         self.assertEqual(2, len(features[0]))
         self.assertEqual([1,1] , features[0])
     
+
+
+class TestNormalizeData(unittest.TestCase):
+    def test_nan(self):
+        matrix = [[285560.5, 0.0, 0.0], [106637.5, 0.0, 0.0]]
+        normalized = normalize_data(matrix)
+        for row in normalized:
+            for col in row:
+                self.assertEquals(False, math.isnan(col))
 
 if __name__ == '__main__':
     unittest.main()

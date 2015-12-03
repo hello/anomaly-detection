@@ -40,7 +40,7 @@ def get_active_accounts(conn):
             account_ids.add(row[0])
     return account_ids
 
-def normalizeData(compressedMatrix):
+def normalize_data(compressedMatrix):
     normalizedMatrix = []
     compressedMatrix = np.asarray(compressedMatrix)
     if len(compressedMatrix) == 0:
@@ -103,7 +103,13 @@ def run(account_id, conn, a, b):
     
     sorted_days = sorted(days.keys())
     matrix = feature_extraction(days)
-    normalized_features = normalizeData(matrix)
+    if not matrix:
+        logging.error("No feature extracted. Error?")
+        return
+
+    
+    normalized_features = normalize_data(matrix)
+
 
     eps = getEps(normalized_features)
     db = DBSCAN(eps=max(eps,b), min_samples=5)
