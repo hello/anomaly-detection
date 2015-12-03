@@ -1,7 +1,3 @@
-import logging
-import logging.config
-import sys
-import yaml
 import psycopg2
 import os
 import numpy as np
@@ -10,41 +6,17 @@ from hellopy import timeit
 from pytz import timezone
 from datetime import datetime
 from datetime import timedelta
-import redis
 # temp
+
+import logging
 
 from sklearn.cluster import DBSCAN
 
-logging.config.fileConfig('logging.ini')
+
+from transformations import from_db_rows
+
 logger = logging.getLogger(__name__)
 
-def main():
-
-    logger.info("test")
-    config = {}
-    with open(sys.argv[1], 'r') as f:
-        c = yaml.load(f)
-        config.update(c)
-
-    r = redis.Redis(**config['redis'])
-    now = datetime.now()
-    now_utc = now.replace(tzinfo=timezone('UTC'))
-    tracking_key = "%s|%s" % ("suripu-anomaly", now_utc.strftime(DATE_FORMAT))
-
-    r.sadd(tracking_key, 0)
-    conn = psycopg2.connect(**config['sensors_db'])
-    
-    account_ids = get_active_accounts(conn)
-
-    for account_id in account_ids:
-        if r.sismember(tracking_key, account_id):
-            logging.debug("Skipping account: %d since we've already seen it", account_id)
-            continue
-        
-        do_something(account_id, conn, 6,3)        
-        r.sadd(tracking_key, account_id)
-        
-    logging.warn("DONE")
 
 
 def chunks(l, n):
@@ -97,7 +69,7 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def do_something(account_id, conn, a, b):
+def run(account_id, conn, a, b):
     results = []
 
     now = datetime.now()
@@ -123,21 +95,7 @@ def do_something(account_id, conn, a, b):
         logging.warn("No data for user %d", account_id)
         return
 
-    days = {}
-
-    """
-    { 'today' : [0,0,0,0,0,0]}
-    """
-    for result in results:
-
-        day = result[2].strftime(DATE_FORMAT)
-        hour = result[2].hour
-        # if result[1] < 30:
-        #     continue
-        if day not in days:
-            days[day] = [0] * 6
-
-        days[day][hour] = result[0]
+    days = from_db_rows(results)
 
     if len(days) < limit / 2:
         logging.warn("not enough days (%d) for user %d", len(days), account_id)

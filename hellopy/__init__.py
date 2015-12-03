@@ -3,7 +3,6 @@ import logging.config
 
 import time
 
-logging.config.fileConfig('logging.ini')
 logger = logging.getLogger(__name__)
 
 def timeit(fn):
@@ -16,3 +15,6 @@ def timeit(fn):
         return result
 
     return timed
+
+
+DATE_FORMAT = '%Y-%m-%d'
