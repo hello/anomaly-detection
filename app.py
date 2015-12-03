@@ -28,9 +28,12 @@ def main():
     
     conn = psycopg2.connect(**config['sensors_db'])
     
-    for account_id in range(1067, 2000):
+    account_ids = get_active_accounts(conn)
+
+    for account_id in account_ids:
         do_something(account_id, conn, 6,3)        
-    # do_something(1067, conn, 6,3)
+    
+    logging.warn("DONE")
 
 
 def chunks(l, n):
@@ -40,6 +43,19 @@ def chunks(l, n):
 
 DATE_FORMAT = '%Y-%m-%d'
 
+
+def get_active_accounts(conn):
+    now = datetime.now()
+    now_utc = now.replace(tzinfo=timezone('UTC'))
+    last_night = now_utc + timedelta(days=-2)
+    account_ids = set()
+    with conn.cursor() as cursor:
+        cursor.execute("""SELECT COUNT(DISTINCT(account_id)) FROM tracker_motion_master WHERE local_utc_ts > %(start)s;""", dict(start=last_night))
+
+        rows = cursor.fetchall()
+        for row in rows:
+            account_ids.add(row[0])
+    return account_ids
 
 def normalizeData(compressedMatrix):
     normalizedMatrix = []
