@@ -25,7 +25,7 @@ def write_anomaly_result(conn, account_id, date_computed, target_date, anomaly_d
             query = cur.mogrify("INSERT INTO anomaly_results (account_id, date_computed, target_date, anomaly_days, alg_id) VALUES (%s, %s, %s, %s, %s) RETURNING id", 
                                 (account_id, date_computed, target_date, anomaly_days, alg_id))
             logging.info("query: %s", query)
-            cur.execute(query, (str(account_id), str(date_computed), str(target_date), str(anomaly_days), str(alg_id)) )
+            cur.execute(query)
             inserted_row = cur.fetchone()
 
             conn.commit()
@@ -40,5 +40,3 @@ def write_anomaly_result(conn, account_id, date_computed, target_date, anomaly_d
                     %(account_id, date_computed, target_date, alg_id, error))
     return (-1, error.pgcode) 
 
-if __name__ == "__main__":
-    main()

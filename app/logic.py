@@ -125,12 +125,14 @@ def run(account_id, conn, conn_write, a, b):
     db.fit(normalized_features)
     labels = db.labels_
 
+    anomaly_days = []
     for day, anomaly in zip(sorted_days, labels):
         if anomaly == -1:
+            anomaly_days.append(datetime.strptime(day, DATE_FORMAT))
             logging.info("%s is an anomaly for account %d", day, account_id)
 
     alg_id_dbscan1 = '1'
-    write_anomaly_result(conn_write, account_id, now, now, sorted_days, alg_id_dbscan1)
+    write_anomaly_result(conn_write, account_id, now, now, anomaly_days, alg_id_dbscan1)
 
 if __name__ == '__main__':
     main()
