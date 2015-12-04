@@ -45,6 +45,8 @@ def normalize_data(compressedMatrix):
     compressedMatrix = np.asarray(compressedMatrix)
     if len(compressedMatrix) == 0:
         return np.asarray([])
+    if 0 in compressedMatrix.std(axis=0):
+        return np.asarray([])
 
     normalizedMatrix = (compressedMatrix - compressedMatrix.mean(axis=0))/ compressedMatrix.std(axis=0)
     return np.asarray(normalizedMatrix)
