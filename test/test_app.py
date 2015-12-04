@@ -1,6 +1,9 @@
 import unittest
+
 from app import feature_extraction
 from app import normalize_data
+from app import get_eps
+
 import math
 import numpy as np
 
@@ -72,6 +75,37 @@ class TestNormalizeData(unittest.TestCase):
             normalized = normalize_data(matrix)
             self.assertEquals(np.ndarray, type(normalized))
             self.assertEquals(normalized.all(), result.all()) 
+
+class TestGetEps(unittest.TestCase):
+    
+    def test_fail_empty(self):
+        normalized = np.asarray([])
+        eps = get_eps(normalized)
+        self.assertEquals(-1.0, eps)
+
+    def test_fail_single(self):
+        normalized = np.asarray([[1,1,2]])
+        eps = get_eps(normalized)
+        print eps
+        self.assertEquals(-1.0, eps)
+
+    def test_result(self):
+        norm1 = np.asarray([[0],[1]])
+        eps1 = 1.0
+
+        norm2 = np.asarray([[0,0],[1,1]])
+        eps2 = 2**0.5
+
+        norm3 = np.asarray([[0,0],[1,1],[-1,-1]])
+        eps3 = 2**0.5
+
+        norm4 = np.asarray([[0,1],[0,1]])
+        eps4 = 0.0
+
+        norms_epses = [(norm1, eps1)]
+        for (normalized, eps_true) in norms_epses:
+            eps_result = get_eps(normalized)
+            self.assertEquals(eps_result, eps_true)
 
 if __name__ == '__main__':
     unittest.main()
