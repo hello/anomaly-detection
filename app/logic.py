@@ -2,7 +2,6 @@ import psycopg2
 import os
 import numpy as np
 import itertools
-from hellopy import timeit
 from pytz import timezone
 from datetime import datetime
 from datetime import timedelta
@@ -14,6 +13,7 @@ from sklearn.cluster import DBSCAN
 
 
 from transformations import from_db_rows
+from anomalyDAO import write_anomaly_result
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def run(account_id, conn, a, b):
+def run(account_id, conn, conn_write, a, b):
     results = []
 
     now = datetime.now()
@@ -128,6 +128,9 @@ def run(account_id, conn, a, b):
     for day, anomaly in zip(sorted_days, labels):
         if anomaly == -1:
             logging.info("%s is an anomaly for account %d", day, account_id)
+
+    alg_id_dbscan1 = '1'
+    write_anomaly_result(conn_write, account_id, now, now, sorted_days, alg_id_dbscan1)
 
 if __name__ == '__main__':
     main()
