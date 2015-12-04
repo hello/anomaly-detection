@@ -112,8 +112,8 @@ def run(account_id, conn, a, b):
         return
     
     normalized_features = normalize_data(matrix)
-    if not normalized_features:
-        logging.warn("Normalized features empty.")
+    if len(normalized_features) <= 1:
+        logging.warn("Normalized features empty. len(normalized_features)=%s" % str(len(normalized_features)) )
         return
 
     eps = get_eps(normalized_features)
