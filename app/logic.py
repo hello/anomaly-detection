@@ -51,14 +51,16 @@ def normalize_data(compressedMatrix):
     normalizedMatrix = (compressedMatrix - compressedMatrix.mean(axis=0))/ compressedMatrix.std(axis=0)
     return np.asarray(normalizedMatrix)
 
-def getEps(normalizedMatrix):
+def get_eps(normalizedMatrix):
+    if len(normalizedMatrix) <= 1:
+        return -1.0 
+
     distanceList = []
     for pointPair in itertools.combinations(normalizedMatrix, 2):
         distance = np.linalg.norm(pointPair[0] - pointPair[1])
         distanceList.append(distance)
     percDistance = np.percentile(distanceList, 50)
     return percDistance
-
 
 def feature_extraction(data_dict):
     matrix = []
@@ -108,14 +110,18 @@ def run(account_id, conn, a, b):
     if not matrix:
         logging.error("No feature extracted. Error?")
         return
-
     
     normalized_features = normalize_data(matrix)
+    if len(normalized_features) <= 1:
+        logging.warn("Normalized features empty. len(normalized_features)=%s" % str(len(normalized_features)) )
+        return
 
+    eps = get_eps(normalized_features)
+    if eps <= 0:
+        logging.error("Incorrect input passed to get_eps() eps=%s." % eps)
+        return
 
-    eps = getEps(normalized_features)
     db = DBSCAN(eps=max(eps,b), min_samples=5)
-
     db.fit(normalized_features)
     labels = db.labels_
 
