@@ -130,6 +130,7 @@ def run(account_id, conn, conn_write, a, b):
         if anomaly == -1:
             anomaly_days.append(datetime.strptime(day, DATE_FORMAT))
             logging.info("%s is an anomaly for account %d", day, account_id)
+    anomaly_days.reverse() #store most recent anomaly first for easy query 
 
     alg_id_dbscan1 = '1'
     write_anomaly_result(conn_write, account_id, now, now, anomaly_days, alg_id_dbscan1)

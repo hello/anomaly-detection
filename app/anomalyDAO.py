@@ -40,3 +40,81 @@ def write_anomaly_result(conn, account_id, date_computed, target_date, anomaly_d
                     %(account_id, date_computed, target_date, alg_id, error))
     return (-1, error.pgcode) 
 
+def get_num_anomalies_date(conn, date_computed, target_date, alg_id):
+    alg_id = str(alg_id)
+
+    try:
+        with conn.cursor() as cur:
+            query = cur.mogrify("SELECT COUNT(*) FROM anomaly_results WHERE DATE_TRUNC('day', date_computed)=%s " + 
+                                                                    "AND DATE_TRUNC('day', target_date)=%s " +
+                                                                    "AND alg_id=%s " +
+                                                                    "AND DATE_TRUNC('day', target_date) = DATE_TRUNC('day', anomaly_days[1])  ", 
+                                (date_computed, target_date, alg_id))
+            logging.info("query: %s", query)
+            cur.execute(query)
+            count = cur.fetchall()[0][0]
+            return count
+
+    except psycopg2.Error as error:
+        logging.error("Fail to query anomaly_results for date_computed=%s target_date=%s alg_id=%s", date_computed, target_date, alg_id)
+
+    return -1
+
+def get_num_alg_date(conn, date_computed, target_date, alg_id):
+    alg_id = str(alg_id)
+
+    try:
+        with conn.cursor() as cur:
+            query = cur.mogrify("SELECT COUNT(*) FROM anomaly_results WHERE DATE_TRUNC('day', date_computed)=%s " + 
+                                                                    "AND DATE_TRUNC('day', target_date)=%s " +
+                                                                    "AND alg_id=%s ",
+                                (date_computed, target_date, alg_id))
+            logging.info("query: %s", query)
+            cur.execute(query)
+            count = cur.fetchall()[0][0]
+            return count
+
+    except psycopg2.Error as error:
+        logging.error("Fail to query anomaly_results for date_computed=%s target_date=%s alg_id=%s", date_computed, target_date, alg_id)
+
+    return -1
+
+def get_anomaly_density_date(conn, date_computed, target_date, alg_id):
+    alg_id = str(alg_id)
+
+    try:
+        with conn.cursor() as cur:
+            query = cur.mogrify("SELECT ARRAY_LENGTH(anomaly_days, 1) FROM anomaly_results " +
+                                                                    "WHERE DATE_TRUNC('day', date_computed)=%s " + 
+                                                                    "AND DATE_TRUNC('day', target_date)=%s " +
+                                                                    "AND alg_id=%s ",
+                                (date_computed, target_date, alg_id))
+            logging.info("query: %s", query)
+            cur.execute(query)
+            counts = [item[0] for item in cur.fetchall()]
+            return counts
+
+    except psycopg2.Error as error:
+        logging.error("Fail to query anomaly_results for date_computed=%s target_date=%s alg_id=%s", date_computed, target_date, alg_id)
+
+    return [-1]
+
+def get_avg_anomaly_density_date(conn, date_computed, target_date, alg_id):
+    alg_id = str(alg_id)
+
+    try:
+        with conn.cursor() as cur:
+            query = cur.mogrify("SELECT AVG(ARRAY_LENGTH(anomaly_days, 1)) FROM anomaly_results " +
+                                                                    "WHERE DATE_TRUNC('day', date_computed)=%s " + 
+                                                                    "AND DATE_TRUNC('day', target_date)=%s " +
+                                                                    "AND alg_id=%s ",
+                                (date_computed, target_date, alg_id))
+            logging.info("query: %s", query)
+            cur.execute(query)
+            count = cur.fetchall()
+            return count[0][0]
+
+    except psycopg2.Error as error:
+        logging.error("Fail to query anomaly_results for date_computed=%s target_date=%s alg_id=%s", date_computed, target_date, alg_id)
+
+    return -1.0
