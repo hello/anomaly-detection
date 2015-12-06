@@ -4,7 +4,7 @@ def from_db_rows(results, min_threshold=60):
     days = {}
 
     """
-    returns { "2015-11-01" : [0,0,0,0,0,0]}
+    returns { "2015-11-01" : [1,1,1,1,1,1]}
     """
     for sensor_value, num_samples, day_of in results:
 
@@ -17,6 +17,10 @@ def from_db_rows(results, min_threshold=60):
             days[day] = [-1] * 6
 
         days[day][hour] = sensor_value
+
+    for day in days.keys():
+        if -1 in days[day]:
+            del days[day]
 
     return days
 

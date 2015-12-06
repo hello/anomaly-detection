@@ -8,8 +8,18 @@ sensors_db:
 anomaly_results:
     host: localhost
     port: 5432
+    user: 
+    password: 
     dbname: 
 
 redis:
     host: localhost 
     port: 6379
+
+dbscan_params:
+    eps_multi: 1.0
+    min_eps: 3.0
+    min_pts: 5
+    limit: 30
+    limit_filter: 7
+

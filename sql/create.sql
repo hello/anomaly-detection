@@ -19,4 +19,4 @@ CREATE TABLE anomaly_alg(
   target_window INTEGER
 );
 
-/* alg_params = "{alg: DBSCAN, feature: ambient_light, num_buckets: 3, a: 1.5, b: 2, minPts:4}" */
+/* alg_params = "{alg: DBSCAN, feature: ambient_light, num_buckets: 3, eps_multi: 1.5, min_eps: 2, min_pts:4}" */

@@ -73,7 +73,7 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def run(account_id, conn, conn_write, a, b):
+def run(account_id, conn, conn_write, eps_multi, min_eps, min_pts, limit, limit_filter):
     results = []
 
     now = datetime.now()
@@ -101,7 +101,7 @@ def run(account_id, conn, conn_write, a, b):
 
     days = from_db_rows(results)
 
-    if len(days) < limit / 2:
+    if len(days) < limit_filter:
         logging.warn("not enough days (%d) for user %d", len(days), account_id)
         return
     
@@ -121,7 +121,7 @@ def run(account_id, conn, conn_write, a, b):
         logging.error("Incorrect input passed to get_eps() eps=%s." % eps)
         return
 
-    db = DBSCAN(eps=max(eps,b), min_samples=5)
+    db = DBSCAN(eps=max(eps_multi*eps, min_eps), min_samples=min_pts)
     db.fit(normalized_features)
     labels = db.labels_
 

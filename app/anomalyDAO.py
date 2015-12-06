@@ -33,12 +33,12 @@ def write_anomaly_result(conn, account_id, date_computed, target_date, anomaly_d
             if inserted_row:
                 row_id = int(inserted_row[0])
                 logging.info("Success insertion into anomaly_results for account_id=%s date_computed=%s target_date=%s alg_id=%s.", account_id, row_id)
-                return (row_id, '00000')
+                return True
 
     except psycopg2.Error as error:
         logging.error("Fail insertion into anomaly_results for account_id=%s date_computed=%s target_date=%s alg_id=%s psycopg2 error=%s." 
                     %(account_id, date_computed, target_date, alg_id, error))
-    return (-1, error.pgcode) 
+    return False
 
 def get_num_anomalies_date(conn, date_computed, target_date, alg_id):
     alg_id = str(alg_id)
