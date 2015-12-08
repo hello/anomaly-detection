@@ -24,7 +24,7 @@ target_date has local timezone */
  anomaly_days = "{ TIMESTAMP "2015-11-01", TIMESTAMP "2015-10-31" }"*/
 
 CREATE TABLE anomaly_alg(
-  alg_id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY,
   alg_category VARCHAR,
   alg_params TEXT,
   num_buckets INTEGER,

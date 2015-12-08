@@ -73,7 +73,14 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def run(account_id, conn, conn_write, conn_write_raw, eps_multi, min_eps, min_pts, limit, limit_filter, alg_id):
+def run(account_id, conn, conn_write, conn_write_raw, dbscan_params):
+    eps_multi = dbscan_params['eps_multi']
+    min_eps = dbscan_params['min_eps']
+    min_pts = dbscan_params['min_pts']
+    limit = dbscan_params['limit']
+    limit_filter = dbscan_params['limit_filter']
+    alg_id = dbscan_params['alg_id']
+
     results = []
 
     now = datetime.now()

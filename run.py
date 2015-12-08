@@ -30,12 +30,6 @@ def main():
         conn_write_raw = psycopg2.connect(**config['anomaly_results_raw'])
 
         dbscan_params = config['dbscan_params']
-        eps_multi = dbscan_params['eps_multi']
-        min_eps = dbscan_params['min_eps']
-        min_pts = dbscan_params['min_pts']
-        limit = dbscan_params['limit']
-        limit_filter = dbscan_params['limit_filter']
-        alg_id = dbscan_params['alg_id']
         
         account_ids = app.get_active_accounts(conn_sensors)
 
@@ -44,7 +38,7 @@ def main():
                 logging.debug("Skipping account: %d since we've already seen it", account_id)
                 continue
             
-            app.run(account_id, conn_sensors, conn_write, conn_write_raw, eps_multi, min_eps, min_pts, limit, limit_filter, alg_id)        
+            app.run(account_id, conn_sensors, conn_write, conn_write_raw, dbscan_params)        
             tracker.track(account_id)
 
         logging.warn("Iteration done")
