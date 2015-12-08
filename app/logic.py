@@ -13,7 +13,7 @@ from sklearn.cluster import DBSCAN
 
 
 from transformations import from_db_rows
-from anomalyDAO import write_anomaly_result
+from anomalyDAO import write_anomaly_result, write_anomaly_result_raw
 
 logger = logging.getLogger(__name__)
 
@@ -73,13 +73,15 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def run(account_id, conn, conn_write, eps_multi, min_eps, min_pts, limit, limit_filter):
+def run(account_id, conn, conn_write, conn_write_raw, eps_multi, min_eps, min_pts, limit, limit_filter, alg_id):
     results = []
 
     now = datetime.now()
-    now_utc = now.replace(tzinfo=timezone('UTC'))
+    now_utc = now
+#    now_utc = now.replace(tzinfo=timezone('UTC'))
 
-    limit = 30
+    now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
+
     thirty_days_ago = now_utc + timedelta(days=-limit)
     with conn.cursor() as cursor:
         cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
@@ -130,10 +132,12 @@ def run(account_id, conn, conn_write, eps_multi, min_eps, min_pts, limit, limit_
         if anomaly == -1:
             anomaly_days.append(datetime.strptime(day, DATE_FORMAT))
             logging.info("%s is an anomaly for account %d", day, account_id)
-    anomaly_days.reverse() #store most recent anomaly first for easy query 
 
-    alg_id_dbscan1 = '1'
-    write_anomaly_result(conn_write, account_id, now, now, anomaly_days, alg_id_dbscan1)
+    if now_start_of_day in anomaly_days:
+        write_anomaly_result(conn_write, account_id, now_start_of_day, alg_id)
+
+    anomaly_days.reverse() #store most recent anomaly first for easy query 
+    write_anomaly_result_raw(conn_write_raw, account_id, now_start_of_day, anomaly_days, alg_id)
 
 if __name__ == '__main__':
     main()

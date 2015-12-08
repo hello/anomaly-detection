@@ -24,4 +24,3 @@ def from_db_rows(results, min_threshold=60):
 
     return days
 
-
