@@ -2,7 +2,6 @@ import psycopg2
 import os
 import numpy as np
 import itertools
-from hellopy import timeit
 from pytz import timezone
 from datetime import datetime
 from datetime import timedelta
@@ -14,6 +13,7 @@ from sklearn.cluster import DBSCAN
 
 
 from transformations import from_db_rows
+from anomalyDAO import write_anomaly_result, write_anomaly_result_raw
 
 logger = logging.getLogger(__name__)
 
@@ -73,15 +73,24 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def run(account_id, conn, a, b):
+def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
+    eps_multi = dbscan_params['eps_multi']
+    min_eps = dbscan_params['min_eps']
+    min_pts = dbscan_params['min_pts']
+    limit = dbscan_params['limit']
+    limit_filter = dbscan_params['limit_filter']
+    alg_id = dbscan_params['alg_id']
+
     results = []
 
     now = datetime.now()
-    now_utc = now.replace(tzinfo=timezone('UTC'))
+    now_utc = now
+#    now_utc = now.replace(tzinfo=timezone('UTC'))
 
-    limit = 30
+    now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
+
     thirty_days_ago = now_utc + timedelta(days=-limit)
-    with conn.cursor() as cursor:
+    with conn_sensors.cursor() as cursor:
         cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
                           FROM device_sensors_master
                           WHERE account_id = %(account_id)s
@@ -101,7 +110,7 @@ def run(account_id, conn, a, b):
 
     days = from_db_rows(results)
 
-    if len(days) < limit / 2:
+    if len(days) < limit_filter:
         logging.warn("not enough days (%d) for user %d", len(days), account_id)
         return
     
@@ -121,13 +130,21 @@ def run(account_id, conn, a, b):
         logging.error("Incorrect input passed to get_eps() eps=%s." % eps)
         return
 
-    db = DBSCAN(eps=max(eps,b), min_samples=5)
+    db = DBSCAN(eps=max(eps_multi*eps, min_eps), min_samples=min_pts)
     db.fit(normalized_features)
     labels = db.labels_
 
+    anomaly_days = []
     for day, anomaly in zip(sorted_days, labels):
         if anomaly == -1:
+            anomaly_days.append(datetime.strptime(day, DATE_FORMAT))
             logging.info("%s is an anomaly for account %d", day, account_id)
+
+    if now_start_of_day in anomaly_days:
+        write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
+
+    anomaly_days.reverse() #store most recent anomaly first for easy query 
+    write_anomaly_result_raw(conn_anomaly, account_id, now_start_of_day, anomaly_days, alg_id)
 
 if __name__ == '__main__':
     main()
