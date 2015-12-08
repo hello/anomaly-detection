@@ -73,7 +73,7 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def run(account_id, conn, conn_write, conn_write_raw, dbscan_params):
+def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
     eps_multi = dbscan_params['eps_multi']
     min_eps = dbscan_params['min_eps']
     min_pts = dbscan_params['min_pts']
@@ -90,7 +90,7 @@ def run(account_id, conn, conn_write, conn_write_raw, dbscan_params):
     now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
 
     thirty_days_ago = now_utc + timedelta(days=-limit)
-    with conn.cursor() as cursor:
+    with conn_sensors.cursor() as cursor:
         cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
                           FROM device_sensors_master
                           WHERE account_id = %(account_id)s
@@ -141,10 +141,10 @@ def run(account_id, conn, conn_write, conn_write_raw, dbscan_params):
             logging.info("%s is an anomaly for account %d", day, account_id)
 
     if now_start_of_day in anomaly_days:
-        write_anomaly_result(conn_write, account_id, now_start_of_day, alg_id)
+        write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
 
     anomaly_days.reverse() #store most recent anomaly first for easy query 
-    write_anomaly_result_raw(conn_write_raw, account_id, now_start_of_day, anomaly_days, alg_id)
+    write_anomaly_result_raw(conn_anomaly, account_id, now_start_of_day, anomaly_days, alg_id)
 
 if __name__ == '__main__':
     main()

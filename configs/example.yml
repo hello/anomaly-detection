@@ -5,14 +5,7 @@ sensors_db:
     password: password
     dbname: sensors1
 
-anomaly_results_raw:
-    host: localhost
-    port: 5432
-    user: 
-    password: 
-    dbname: 
-
-anomaly_results:
+anomaly:
     host: localhost
     port: 5432
     user: 

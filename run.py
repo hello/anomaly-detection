@@ -26,8 +26,7 @@ def main():
         tracker = app.Tracker(config['redis'])
 
         conn_sensors = psycopg2.connect(**config['sensors_db'])
-        conn_write = psycopg2.connect(**config['anomaly_results'])
-        conn_write_raw = psycopg2.connect(**config['anomaly_results_raw'])
+        conn_anomaly = psycopg2.connect(**config['anomaly'])
 
         dbscan_params = config['dbscan_params']
         
@@ -38,7 +37,7 @@ def main():
                 logging.debug("Skipping account: %d since we've already seen it", account_id)
                 continue
             
-            app.run(account_id, conn_sensors, conn_write, conn_write_raw, dbscan_params)        
+            app.run(account_id, conn_sensors, conn_anomaly, dbscan_params)        
             tracker.track(account_id)
 
         logging.warn("Iteration done")
