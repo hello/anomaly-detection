@@ -6,7 +6,7 @@ CREATE TABLE anomaly_results(
   alg_id INTEGER
 );
 
-CREATE UNIQUE INDEX uniq_anomaly_results ON anomaly_results(account_id, date_computed, target_date, alg_id);
+CREATE UNIQUE INDEX uniq_anomaly_results ON anomaly_results(account_id, DATE_TRUNC('day', date_computed), target_date, alg_id);
 
 CREATE TABLE anomaly_results_raw(
   id BIGSERIAL PRIMARY KEY,
@@ -17,7 +17,7 @@ CREATE TABLE anomaly_results_raw(
   alg_id INTEGER
 );
 
-CREATE UNIQUE INDEX uniq_anomaly_results_raw ON anomaly_results_raw(account_id, date_computed, target_date, alg_id);
+CREATE UNIQUE INDEX uniq_anomaly_results_raw ON anomaly_results_raw(account_id, DATE_TRUNC('day', date_computed), target_date, alg_id);
 
 /* 
 date_computed has UTC timezone
