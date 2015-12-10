@@ -85,6 +85,9 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
 
     now = datetime.now()
     now_utc = now
+    
+    now_date_string = datetime.strftime(now, DATE_FORMAT)
+
 #    now_utc = now.replace(tzinfo=timezone('UTC'))
 
     now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
@@ -112,6 +115,10 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
 
     if len(days) < limit_filter:
         logging.warn("not enough days (%d) for user %d", len(days), account_id)
+        return
+
+    if now_date_string not in days.keys():
+        logging.warn("not enough data on target date (%s) for user %d", now, account_id)
         return
     
     sorted_days = sorted(days.keys())
