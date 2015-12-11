@@ -84,12 +84,11 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
     results = []
 
     now = datetime.now()
-    now_utc = now
-#    now_utc = now.replace(tzinfo=timezone('UTC'))
+    now_date_string = datetime.strftime(now, DATE_FORMAT)
 
     now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
 
-    thirty_days_ago = now_utc + timedelta(days=-limit)
+    thirty_days_ago = now + timedelta(days=-limit)
     with conn_sensors.cursor() as cursor:
         cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
                           FROM device_sensors_master
@@ -98,7 +97,7 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
                           AND local_utc_ts < %(end)s
                           AND extract('hour' from local_utc_ts) < 6
                           GROUP BY hour
-                          ORDER BY hour ASC""", dict(account_id=account_id, start=thirty_days_ago, end=now_utc))
+                          ORDER BY hour ASC""", dict(account_id=account_id, start=thirty_days_ago, end=now))
 
         rows = cursor.fetchall()
         for row in rows:
@@ -112,6 +111,10 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
 
     if len(days) < limit_filter:
         logging.warn("not enough days (%d) for user %d", len(days), account_id)
+        return
+
+    if now_date_string not in days.keys():
+        logging.warn("not enough data on target date (%s) for user %d", now, account_id)
         return
     
     sorted_days = sorted(days.keys())
