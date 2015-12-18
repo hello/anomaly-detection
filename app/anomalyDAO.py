@@ -1,6 +1,7 @@
 import psycopg2
 import datetime
 from datetime import datetime
+from datetime import timedelta
 
 import logging
 logger = logging.getLogger(__name__)
@@ -36,6 +37,36 @@ def write_anomaly_result(conn, account_id, target_date, alg_id):
     except psycopg2.Error as error:
         logging.error("Fail insertion into anomaly_results for account_id=%s target_date=%s alg_id=%s psycopg2 error=%s." 
                     %(account_id, target_date, alg_id, error))
+    return False
+
+def write_to_account_questions(conn, account_id, question_id, days_on, now):
+
+    account_id = str(account_id)
+    question_id = str(question_id)
+    created_local_utc_ts = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
+    expires_local_utc_ts = created_local_utc_ts + timedelta(days=days_on) 
+    created = now
+    
+    try:
+        with conn.cursor() as cur:
+            query = cur.mogrify("INSERT INTO account_questions (account_id, question_id, created_local_utc_ts, expires_local_utc_ts, created) VALUES (%s, %s, %s, %s, %s) RETURNING id", 
+                                (account_id, question_id, created_local_utc_ts, expires_local_utc_ts, created))
+            logging.info("query: %s", query)
+            cur.execute(query)
+            inserted_row = cur.fetchone()
+
+            conn.commit()
+            
+            if inserted_row:
+                row_id = int(inserted_row[0])
+                logging.info("Successful insertion into account_questions for account_id=%s created=%s question_id=%s" 
+                    % (account_id, str(now), question_id))
+                return True
+
+    except psycopg2.Error as error:
+        logging.error("Fail insertion into account_questions for account_id=%s created=%s question_id=%s psycopg2 error=%s" 
+                % (account_id, str(now), question_id, error))
+
     return False
 
 def write_anomaly_result_raw(conn, account_id, target_date, anomaly_days, alg_id):
