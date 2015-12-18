@@ -25,11 +25,13 @@ def main():
     while True:
         tracker = app.Tracker(config['redis'])
 
+        conn_common = psycopg2.connect(**config['common_db'])
         conn_sensors = psycopg2.connect(**config['sensors_db'])
         conn_anomaly = psycopg2.connect(**config['anomaly'])
 
         dbscan_params = config['dbscan_params']
-        
+        questions_config = config['questions']        
+
         account_ids = app.get_active_accounts(conn_sensors)
 
         for account_id in account_ids:
@@ -37,7 +39,7 @@ def main():
                 logging.debug("Skipping account: %d since we've already seen it", account_id)
                 continue
             
-            app.run(account_id, conn_sensors, conn_anomaly, dbscan_params)        
+            app.run(account_id, conn_common, conn_sensors, conn_anomaly, dbscan_params, questions_config)        
             tracker.track(account_id)
 
         logging.warn("Iteration done")
