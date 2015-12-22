@@ -109,7 +109,7 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
 
     days = from_db_rows(results)
 
-    if len(days) < limit_filter:
+    if len(days) < limit:
         logging.warn("not enough days (%d) for user %d", len(days), account_id)
         return
 

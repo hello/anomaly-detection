@@ -21,6 +21,6 @@ dbscan_params:
     min_eps: 3.0
     min_pts: 5
     limit: 30
-    limit_filter: 7
-    alg_id: 1
+    limit_filter: NA 
+    alg_id: 2
 
