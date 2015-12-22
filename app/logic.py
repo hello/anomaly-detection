@@ -13,7 +13,7 @@ from sklearn.cluster import DBSCAN
 
 
 from transformations import from_db_rows
-from anomalyDAO import write_anomaly_result, write_anomaly_result_raw
+from anomalyDAO import write_anomaly_result, write_anomaly_result_raw, write_to_account_questions
 
 logger = logging.getLogger(__name__)
 
@@ -73,13 +73,17 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
+def run(account_id, conn_common, conn_sensors, conn_anomaly, dbscan_params, questions_config):
     eps_multi = dbscan_params['eps_multi']
     min_eps = dbscan_params['min_eps']
     min_pts = dbscan_params['min_pts']
     limit = dbscan_params['limit']
     limit_filter = dbscan_params['limit_filter']
-    alg_id = dbscan_params['alg_id']
+    max_density = dbscan_params['max_density']
+    alg_id = int(dbscan_params['alg_id'])
+
+    question_id = int(questions_config['question_id'])
+    days_on = int(questions_config['days_on'])
 
     results = []
 
@@ -143,11 +147,17 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
             anomaly_days.append(datetime.strptime(day, DATE_FORMAT))
             logging.info("%s is an anomaly for account %d", day, account_id)
 
-    if now_start_of_day in anomaly_days:
-        write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
-
     anomaly_days.reverse() #store most recent anomaly first for easy query 
     write_anomaly_result_raw(conn_anomaly, account_id, now_start_of_day, anomaly_days, alg_id)
+
+    if len(anomaly_days) > max_density:
+        logging.info("Anom density too high for user %d dens=%d", account_id, len(anomaly_days))
+        return
+
+    if now_start_of_day in anomaly_days:
+        write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
+        write_to_account_questions(conn_common, account_id, question_id, days_on, now)
+
 
 if __name__ == '__main__':
     main()
