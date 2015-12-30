@@ -31,7 +31,8 @@ def main():
         dbscan_params = config['dbscan_params']
         
         account_ids = app.get_active_accounts(conn_sensors)
-
+        logging.debug("Found %d account_ids", len(account_ids))
+        
         for account_id in account_ids:
             if tracker.seen_before(account_id):
                 logging.debug("Skipping account: %d since we've already seen it", account_id)
@@ -39,7 +40,7 @@ def main():
             
             app.run(account_id, conn_sensors, conn_anomaly, dbscan_params)        
             tracker.track(account_id)
-
+            logging.debug("Processed %s", account_id)
         logging.warn("Iteration done")
 
 if __name__ == '__main__':

@@ -91,7 +91,7 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
     thirty_days_ago = now + timedelta(days=-limit)
     with conn_sensors.cursor() as cursor:
         cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
-                          FROM device_sensors_master
+                          FROM prod_sense_data 
                           WHERE account_id = %(account_id)s
                           AND local_utc_ts > %(start)s
                           AND local_utc_ts < %(end)s

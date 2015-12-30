@@ -1,16 +1,22 @@
 sensors_db:
-    host: sensors-2-replica-1.cdawj8qazvva.us-east-1.rds.amazonaws.com:5432
-    user: sensors
-    port: 5432
-    password: hello-sensors
+    host: sensors2.cy7n0vzxfedi.us-east-1.redshift.amazonaws.com
+    user: anomaly
+    port: 5439
+    password: Hello-anomaly123
     dbname: sensors1
+    connect_timeout: 3
 
 anomaly:
-    host: 
+    host: research.cdawj8qazvva.us-east-1.rds.amazonaws.com
     port: 5432
-    user: 
-    password: 
-    dbname: 
+    user: research_user
+    password: hello-research-user
+    dbname: research
+    connect_timeout: 3
+
+redis:
+    host: stats.xoe7je.0001.use1.cache.amazonaws.com
+    port: 6379
 
 redis:
     host: stats.xoe7je.0001.use1.cache.amazonaws.com
