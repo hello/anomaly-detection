@@ -37,8 +37,8 @@ def main():
             if tracker.seen_before(account_id):
                 logging.debug("Skipping account: %d since we've already seen it", account_id)
                 continue
-            
-            app.run(account_id, conn_sensors, conn_anomaly, dbscan_params)        
+            for dbscan_params_i in ['dbscan_params_1', 'dbscan_params_2', 'dbscan_params_3']: 
+                app.run(account_id, conn_sensors, conn_anomaly, dbscan_params[dbscan_params_i])        
             tracker.track(account_id)
             logging.debug("Processed %s", account_id)
         logging.warn("Iteration done")
