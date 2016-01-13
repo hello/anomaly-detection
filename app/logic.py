@@ -30,10 +30,10 @@ DATE_FORMAT = '%Y-%m-%d'
 def get_active_accounts(conn):
     now = datetime.now()
     now_utc = now.replace(tzinfo=timezone('UTC'))
-    last_night = now_utc + timedelta(days=-2)
+    recent_days = now_utc + timedelta(days=-3)
     account_ids = set()
     with conn.cursor() as cursor:
-        cursor.execute("""SELECT DISTINCT(account_id) FROM tracker_motion_master WHERE local_utc_ts > %(start)s ORDER BY account_id;""", dict(start=last_night))
+        cursor.execute("""SELECT DISTINCT(account_id) FROM tracker_motion_master WHERE local_utc_ts > %(start)s ORDER BY account_id;""", dict(start=recent_days))
 
         rows = cursor.fetchall()
         for row in rows:
