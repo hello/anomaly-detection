@@ -18,10 +18,6 @@ redis:
     host: stats.xoe7je.0001.use1.cache.amazonaws.com
     port: 6379
 
-redis:
-    host: stats.xoe7je.0001.use1.cache.amazonaws.com
-    port: 6379
-
 dbscan_params:
     dbscan_params_1:
         eps_multi: 1.0
