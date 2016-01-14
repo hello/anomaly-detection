@@ -28,7 +28,7 @@ def main():
         conn_sensors = psycopg2.connect(**config['sensors_db'])
         conn_anomaly = psycopg2.connect(**config['anomaly'])
 
-        dbscan_params = config['dbscan_params']
+        dbscan_params_meta = config['dbscan_params_meta']
         
         account_ids = app.get_active_accounts(conn_sensors)
         logging.debug("Found %d account_ids", len(account_ids))
@@ -37,8 +37,7 @@ def main():
             if tracker.seen_before(account_id):
                 logging.debug("Skipping account: %d since we've already seen it", account_id)
                 continue
-            for dbscan_params_i in ['dbscan_params_1', 'dbscan_params_2', 'dbscan_params_3']: 
-                app.run(account_id, conn_sensors, conn_anomaly, dbscan_params[dbscan_params_i])        
+            app.run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta)        
             tracker.track(account_id)
             logging.debug("Processed %s", account_id)
         logging.warn("Iteration done")

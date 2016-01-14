@@ -73,22 +73,8 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
-    eps_multi = dbscan_params['eps_multi']
-    min_eps = dbscan_params['min_eps']
-    min_pts = dbscan_params['min_pts']
-    limit = dbscan_params['limit']
-    limit_filter = dbscan_params['limit_filter']
-    alg_id = dbscan_params['alg_id']
-
+def pull_data(conn_sensors, account_id, start, end):
     results = []
-
-    now = datetime.now()
-    now_date_string = datetime.strftime(now, DATE_FORMAT)
-
-    now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
-
-    thirty_days_ago = now + timedelta(days=-limit)
     with conn_sensors.cursor() as cursor:
         cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
                           FROM prod_sense_data 
@@ -97,57 +83,89 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params):
                           AND local_utc_ts < %(end)s
                           AND extract('hour' from local_utc_ts) < 6
                           GROUP BY hour
-                          ORDER BY hour ASC""", dict(account_id=account_id, start=thirty_days_ago, end=now))
+                          ORDER BY hour ASC""", dict(account_id=account_id, start=start, end=end))
 
         rows = cursor.fetchall()
         for row in rows:
             results.append(row)
-    
-    if not results:
-        logging.warn("No data for user %d", account_id)
-        return
+    return results
 
-    days = from_db_rows(results)
+def run_alg(days, dbscan_params, account_id):
+    eps_multi = dbscan_params['eps_multi']
+    min_eps = dbscan_params['min_eps']
+    min_pts = dbscan_params['min_pts']
+    limit_filter = dbscan_params['limit_filter']
+    alg_id = dbscan_params['alg_id']
 
     if len(days) < limit_filter:
         logging.warn("not enough days (%d) for user %d", len(days), account_id)
-        return
+        return np.asarray([])
 
-    if now_date_string not in days.keys():
-        logging.warn("not enough data on target date (%s) for user %d", now, account_id)
-        return
-    
-    sorted_days = sorted(days.keys())
     matrix = feature_extraction(days)
     if not matrix:
         logging.error("No feature extracted. Error?")
-        return
+        return np.asarray([])
     
     normalized_features = normalize_data(matrix)
     if len(normalized_features) <= 1:
         logging.warn("Normalized features empty. len(normalized_features)=%s" % str(len(normalized_features)) )
-        return
+        return np.asarray([])
 
     eps = get_eps(normalized_features)
     if eps <= 0:
         logging.error("Incorrect input passed to get_eps() eps=%s." % eps)
-        return
+        return np.asarray([])
 
     db = DBSCAN(eps=max(eps_multi*eps, min_eps), min_samples=min_pts)
     db.fit(normalized_features)
     labels = db.labels_
+    return labels
 
+def get_anomaly_days(sorted_days, labels, account_id):
     anomaly_days = []
     for day, anomaly in zip(sorted_days, labels):
         if anomaly == -1:
             anomaly_days.append(datetime.strptime(day, DATE_FORMAT))
             logging.info("%s is an anomaly for account %d", day, account_id)
+    return anomaly_days
 
+def write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days):
+    alg_id = dbscan_params['alg_id']
     if now_start_of_day in anomaly_days:
         write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
 
     anomaly_days.reverse() #store most recent anomaly first for easy query 
     write_anomaly_result_raw(conn_anomaly, account_id, now_start_of_day, anomaly_days, alg_id)
+
+def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
+    limit = 30
+
+    now = datetime.now()
+    now_date_string = datetime.strftime(now, DATE_FORMAT)
+    now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
+    thirty_days_ago = now + timedelta(days=-limit)
+
+    results = pull_data(conn_sensors, account_id, thirty_days_ago, now)
+
+    if not results:
+        logging.warn("No data for user %d", account_id)
+        return
+
+    days = from_db_rows(results)
+    sorted_days = sorted(days.keys())
+
+    if now_date_string not in days.keys():
+        logging.warn("not enough data on target date (%s) for user %d", now, account_id)
+        return
+
+    for param_index in dbscan_params_meta:
+        dbscan_params = dbscan_params_meta[param_index]
+        labels = run_alg(days, dbscan_params, account_id)    
+        if labels.size == 0:
+            logging.info("Could not generate labels, see log message for run_alg()")
+            continue
+        anomaly_days = get_anomaly_days(sorted_days, labels, account_id)
+        write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days)  
 
 if __name__ == '__main__':
     main()
