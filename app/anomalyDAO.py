@@ -36,6 +36,8 @@ def write_anomaly_result(conn, account_id, target_date, alg_id):
     except psycopg2.Error as error:
         logging.error("Fail insertion into anomaly_results for account_id=%s target_date=%s alg_id=%s psycopg2 error=%s." 
                     %(account_id, target_date, alg_id, error))
+        conn.rollback()
+
     return False
 
 def write_anomaly_result_raw(conn, account_id, target_date, anomaly_days, alg_id):
@@ -73,6 +75,7 @@ def write_anomaly_result_raw(conn, account_id, target_date, anomaly_days, alg_id
     except psycopg2.Error as error:
         logging.error("Fail insertion into anomaly_results_raw for account_id=%s target_date=%s alg_id=%s psycopg2 error=%s." 
                     %(account_id, target_date, alg_id, error))
+        conn.rollback()
     return False
 
 def get_num_anomalies_date(conn, date_computed, target_date, alg_id):
@@ -92,6 +95,7 @@ def get_num_anomalies_date(conn, date_computed, target_date, alg_id):
 
     except psycopg2.Error as error:
         logging.error("Fail to query anomaly_results_raw for date_computed=%s target_date=%s alg_id=%s", date_computed, target_date, alg_id)
+        conn.rollback()
 
     return -1
 
