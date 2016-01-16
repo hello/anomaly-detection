@@ -21,6 +21,7 @@ def main():
     with open(sys.argv[1], 'r') as f:
         c = yaml.load(f)
         config.update(c)
+    logger.info("Loaded configurations %s", config)
 
     while True:
         tracker = app.Tracker(config['redis'])
@@ -31,16 +32,16 @@ def main():
         dbscan_params_meta = config['dbscan_params_meta']
         
         account_ids = app.get_active_accounts(conn_sensors)
-        logging.debug("Found %d account_ids", len(account_ids))
+        logger.debug("Found %d account_ids", len(account_ids))
         
         for account_id in account_ids:
             if tracker.seen_before(account_id):
-                logging.debug("Skipping account: %d since we've already seen it", account_id)
+                logger.debug("Skipping account: %d since we've already seen it", account_id)
                 continue
             app.run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta)        
             tracker.track(account_id)
-            logging.debug("Processed %s", account_id)
-        logging.warn("Iteration done")
+            logger.debug("Processed %s", account_id)
+        logger.warn("Iteration done")
 
 if __name__ == '__main__':
     main()
