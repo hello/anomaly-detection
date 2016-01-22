@@ -155,7 +155,10 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
     sorted_days = sorted(days.keys())
 
     if now_date_string not in days.keys():
-        logging.warn("not enough data on target date (%s) for user %d", now, account_id)
+        num_days = len(sorted_days)
+        earliest_day = sorted_days[0]
+        latest_day = sorted_days[-1]
+        logging.warn("not enough data on target date (%s) for user %d num_days extracted (%d) from (%s) to (%s)", now, account_id, num_days, earliest_day, latest_day)
         return
 
     for param_index in dbscan_params_meta:
