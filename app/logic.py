@@ -76,7 +76,8 @@ def feature_extraction(data_dict):
 def pull_data(conn_sensors, account_id, start, end):
     results = []
     with conn_sensors.cursor() as cursor:
-        cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
+        try:
+            cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
                           FROM prod_sense_data 
                           WHERE account_id = %(account_id)s
                           AND local_utc_ts > %(start)s
@@ -84,10 +85,16 @@ def pull_data(conn_sensors, account_id, start, end):
                           AND extract('hour' from local_utc_ts) < 6
                           GROUP BY hour
                           ORDER BY hour ASC""", dict(account_id=account_id, start=start, end=end))
+            rows = cursor.fetchall()
 
-        rows = cursor.fetchall()
-        for row in rows:
-            results.append(row)
+            for row in rows:
+                results.append(row)
+
+        except psycopg2.Error as e:
+            logging.debug("Encountered psycopg2 error %s" % e.pgerror) 
+            pass
+
+    logging.info("pulled data with results length (%d)" % len(results))
     return results
 
 def run_alg(days, dbscan_params, account_id):
