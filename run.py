@@ -35,13 +35,14 @@ def main():
         logger.debug("Found %d account_ids", len(account_ids))
         
         for account_id in account_ids:
+            logger.debug("Iteration on account_id %d", account_id)
             if tracker.seen_before(account_id):
                 logger.debug("Skipping account: %d since we've already seen it", account_id)
                 continue
             app.run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta)        
             tracker.track(account_id)
             logger.debug("Processed %s", account_id)
-        logger.warn("Iteration done")
+        logger.info("Iteration done")
 
 if __name__ == '__main__':
     main()
