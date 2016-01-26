@@ -159,6 +159,11 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
         return
 
     days = from_db_rows(results)
+
+    if len(days) == 0:
+        logging.warn("Results pulled but no day of complete data for user %d", account_id)
+        return
+
     sorted_days = sorted(days.keys())
 
     if now_date_string not in days.keys():
