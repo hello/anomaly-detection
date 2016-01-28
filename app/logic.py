@@ -78,13 +78,15 @@ def pull_data(conn_sensors, account_id, start, end):
     with conn_sensors.cursor() as cursor:
         try:
             cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
-                          FROM prod_sense_data 
-                          WHERE account_id = %(account_id)s
-                          AND local_utc_ts > %(start)s
-                          AND local_utc_ts < %(end)s
-                          AND extract('hour' from local_utc_ts) < 6
-                          GROUP BY hour
-                          ORDER BY hour ASC""", dict(account_id=account_id, start=start, end=end))
+                                FROM (SELECT MAX(ambient_light) AS ambient_light, local_utc_ts
+                                    FROM prod_sense_data
+                                    WHERE account_id = %(account_id)s
+                                    AND local_utc_ts > %(start)s
+                                    AND local_utc_ts < %(end)s
+                                    AND extract('hour' from local_utc_ts) < 6
+                                    GROUP BY local_utc_ts)
+                                GROUP BY hour
+                                ORDER BY hour ASC""", dict(account_id=account_id, start=start, end=end))
             rows = cursor.fetchall()
 
             for row in rows:
