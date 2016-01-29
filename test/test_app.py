@@ -3,9 +3,11 @@ import unittest
 from app import feature_extraction
 from app import normalize_data
 from app import get_eps
+from app import get_anomaly_days
 
 import math
 import numpy as np
+from datetime import datetime
 
 class TestFeatureExtractions(unittest.TestCase):
 
@@ -31,8 +33,6 @@ class TestFeatureExtractions(unittest.TestCase):
         self.assertEqual(1, len(features))
         self.assertEqual(1, len(features[0]))
         self.assertEqual([1] , features[0])
-    
-
 
 class TestNormalizeData(unittest.TestCase):
 
@@ -106,6 +106,15 @@ class TestGetEps(unittest.TestCase):
         for (normalized, eps_true) in norms_epses:
             eps_result = get_eps(normalized)
             self.assertEquals(eps_result, eps_true)
+
+class TestGetAnomalyDays(unittest.TestCase):
+
+    def test_one(self):
+        sorted_days = ['2016-01-01', '2016-01-02']
+        labels = [0, -1]
+        anomaly_days = get_anomaly_days(sorted_days, labels, 21561)
+        anomaly_days_expected = [datetime.strptime('2016-01-02', '%Y-%m-%d')] 
+        self.assertEquals(anomaly_days, anomaly_days_expected)  
 
 if __name__ == '__main__':
     unittest.main()
