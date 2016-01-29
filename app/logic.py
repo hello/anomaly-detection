@@ -140,11 +140,16 @@ def get_anomaly_days(sorted_days, labels, account_id):
 
 def write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days):
     alg_id = dbscan_params['alg_id']
-    if now_start_of_day in anomaly_days:
-        write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
+    max_anom_density = dbscan_params['max_anom_density']
 
     anomaly_days.reverse() #store most recent anomaly first for easy query 
     write_anomaly_result_raw(conn_anomaly, account_id, now_start_of_day, anomaly_days, alg_id)
+
+    if len(anomaly_days) >= max_anom_density:
+        logging.info("Anomaly density %d is too high for account %d", len(anomaly_days), account_id)
+        return
+    if now_start_of_day in anomaly_days:
+        write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
 
 def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
     limit = 30
