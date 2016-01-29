@@ -1,6 +1,6 @@
 DATE_FORMAT = '%Y-%m-%d'
 
-def from_db_rows(results, min_threshold=60):
+def from_db_rows(results, min_threshold=55):
     days = {}
 
     """
