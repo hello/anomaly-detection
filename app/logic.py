@@ -82,7 +82,7 @@ def pull_data(conn_sensors, account_id, start, end):
                                     FROM prod_sense_data
                                     WHERE account_id = %(account_id)s
                                     AND local_utc_ts > %(start)s
-                                    AND local_utc_ts < %(end)s
+                                    AND local_utc_ts <= %(end)s
                                     AND extract('hour' from local_utc_ts) < 6
                                     GROUP BY local_utc_ts)
                                 GROUP BY hour
