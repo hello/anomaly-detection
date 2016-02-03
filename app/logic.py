@@ -173,13 +173,13 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
 
     if not results:
         logging.warn("No data for user %d", account_id)
-        return
+        return False
 
     days = from_db_rows(results)
 
     if len(days) == 0:
         logging.warn("Results pulled but no day of complete data for user %d", account_id)
-        return
+        return False
 
     sorted_days = sorted(days.keys())
 
@@ -188,7 +188,7 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
         earliest_day = sorted_days[0]
         latest_day = sorted_days[-1]
         logging.warn("not enough data on target date (%s) for user %d num_days extracted (%d) from (%s) to (%s)", now, account_id, num_days, earliest_day, latest_day)
-        return
+        return False
 
     for param_index in dbscan_params_meta:
         dbscan_params = dbscan_params_meta[param_index]
@@ -198,6 +198,8 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
             continue
         anomaly_days = get_anomaly_days(sorted_days, labels, account_id)
         write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days)  
+
+    return True
 
 if __name__ == '__main__':
     main()
