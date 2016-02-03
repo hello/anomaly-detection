@@ -28,12 +28,17 @@ DATE_FORMAT = '%Y-%m-%d'
 
 
 def get_active_accounts(conn):
-    now = datetime.now()
-    now_utc = now.replace(tzinfo=timezone('UTC'))
+    hour_in_millis = 3600000
+
+    now_utc = datetime.utcnow()
     recent_days = now_utc + timedelta(days=-3)
+    
+    current_utc_hour = now_utc.hour
+    allowed_offset = (-current_utc_hour + 6) * hour_in_millis
+
     account_ids = set()
     with conn.cursor() as cursor:
-        cursor.execute("""SELECT DISTINCT(account_id) FROM tracker_motion_master WHERE local_utc_ts > %(start)s ORDER BY account_id;""", dict(start=recent_days))
+        cursor.execute("""SELECT DISTINCT(account_id) FROM tracker_motion_master WHERE local_utc_ts > %(start)s AND offset_millis >= %(allowed_offset)s ORDER BY account_id;""", dict(start=recent_days, allowed_offset=allowed_offset))
 
         rows = cursor.fetchall()
         for row in rows:
