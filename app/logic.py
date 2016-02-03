@@ -38,11 +38,16 @@ def get_active_accounts(conn):
 
     account_ids = set()
     with conn.cursor() as cursor:
-        cursor.execute("""SELECT DISTINCT(account_id) FROM tracker_motion_master WHERE local_utc_ts > %(start)s AND offset_millis >= %(allowed_offset)s ORDER BY account_id;""", dict(start=recent_days, allowed_offset=allowed_offset))
+        cursor.execute("""SELECT DISTINCT(account_id), MAX(offset_millis) FROM tracker_motion_master WHERE local_utc_ts > %(start)s GROUP BY account_id ORDER BY account_id;""", dict(start=recent_days))
 
         rows = cursor.fetchall()
+        logging.info("Select returned %d total active account_ids", len(rows))
         for row in rows:
+            if row[1] < allowed_offset:
+                print row[1], row[0]
+                continue
             account_ids.add(row[0])
+        logging.info("Filtering for current allowed offset_millis=%d returned %d eligible active account_ids", allowed_offset, len(account_ids))
     return account_ids
 
 def normalize_data(compressedMatrix):
