@@ -48,12 +48,14 @@ def main():
 
         account_ids = app.get_active_accounts(conn_sensors)
         logger.debug("Found %d account_ids", len(account_ids))
-        
+
+        no_accounts_processed = True        
         for account_id in account_ids:
 #            logger.debug("Iteration on account_id %d", account_id)
             if tracker.seen_before(account_id):
 #                logger.debug("Skipping account: %d since we've already seen it", account_id)
                 continue
+            no_accounts_processed = False
             run_success = app.run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta)        
             if run_success:
                 tracker.track_success(account_id)
@@ -64,6 +66,10 @@ def main():
         logger.info("Iteration done")
 #        logger.info("Tracker has keys %s", tracker.query_keys())
         logger.info("For date %s currently %d success unique account_ids %d fail unique account_ids tracked out of roughly %d accounts attempted", tracker.success_key, len(tracker.query_success_key()), len(tracker.query_fail_key()), len(account_ids))
+
+        if no_accounts_processed:
+            logger.info("No accounts processed on last loop because all tracked. Sleeping for 5 min")
+            time.sleep(60 * 5) 
 
 if __name__ == '__main__':
     main()
