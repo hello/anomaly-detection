@@ -18,15 +18,25 @@ redis:
     host: stats.xoe7je.0001.use1.cache.amazonaws.com
     port: 6379
 
-redis:
-    host: stats.xoe7je.0001.use1.cache.amazonaws.com
-    port: 6379
-
-dbscan_params:
-    eps_multi: 1.0
-    min_eps: 3.0
-    min_pts: 5
-    limit: 30
-    limit_filter: -99 
-    alg_id: 2
-
+dbscan_params_meta:
+    dbscan_params_1:
+        eps_multi: 1.0
+        min_eps: 3.0
+        min_pts: 5
+        limit_filter: 7 
+        alg_id: 1
+        max_anom_density: 99 
+    dbscan_params_2:
+        eps_multi: 1.0
+        min_eps: 3.0
+        min_pts: 5
+        limit_filter: 20 
+        alg_id: 4
+        max_anom_density: 3 
+    dbscan_params_3:
+        eps_multi: 1.0
+        min_eps: 3.0
+        min_pts: 5
+        limit_filter: 29 
+        alg_id: 3
+        max_anom_density: 99 

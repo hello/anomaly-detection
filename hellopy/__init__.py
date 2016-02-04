@@ -18,3 +18,4 @@ def timeit(fn):
 
 
 DATE_FORMAT = '%Y-%m-%d'
+DATE_HR_FORMAT = '%Y-%m-%d %H'

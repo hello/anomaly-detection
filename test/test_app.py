@@ -3,9 +3,15 @@ import unittest
 from app import feature_extraction
 from app import normalize_data
 from app import get_eps
+from app import get_anomaly_days
+
+from app import from_db_rows 
 
 import math
 import numpy as np
+from datetime import datetime
+
+DATE_FORMAT = '%Y-%m-%d'
 
 class TestFeatureExtractions(unittest.TestCase):
 
@@ -31,8 +37,6 @@ class TestFeatureExtractions(unittest.TestCase):
         self.assertEqual(1, len(features))
         self.assertEqual(1, len(features[0]))
         self.assertEqual([1] , features[0])
-    
-
 
 class TestNormalizeData(unittest.TestCase):
 
@@ -106,6 +110,35 @@ class TestGetEps(unittest.TestCase):
         for (normalized, eps_true) in norms_epses:
             eps_result = get_eps(normalized)
             self.assertEquals(eps_result, eps_true)
+
+class TestGetAnomalyDays(unittest.TestCase):
+
+    def test_one(self):
+        sorted_days = ['2016-01-01', '2016-01-02']
+        labels = [0, -1]
+        anomaly_days = get_anomaly_days(sorted_days, labels, 21561)
+        anomaly_days_expected = [datetime.strptime('2016-01-02', DATE_FORMAT)] 
+        self.assertEquals(anomaly_days, anomaly_days_expected)  
+
+class TestFromDbRows(unittest.TestCase):
+
+    def test_normal(self):
+        results = [[1,60,datetime.strptime('2016-01-01', DATE_FORMAT)],[0,60,datetime.strptime('2016-01-01', DATE_FORMAT).replace(hour=1)],[0,60,datetime.strptime('2016-01-01', DATE_FORMAT).replace(hour=2)],[1,60,datetime.strptime('2016-01-01',DATE_FORMAT).replace(hour=3)],[1,60,datetime.strptime('2016-01-01',DATE_FORMAT).replace(hour=4)],[1,60,datetime.strptime('2016-01-01',DATE_FORMAT).replace(hour=5)]]
+        days = from_db_rows(results, 60)
+        expected_days = {'2016-01-01':[1,0,0,1,1,1]}
+        self.assertEquals(days, expected_days)
+        
+    def test_to_null_1(self):
+        results = [[1,60,datetime.strptime('2016-01-01', DATE_FORMAT)],[0,60,datetime.strptime('2016-01-01', DATE_FORMAT).replace(hour=1)],[0,60,datetime.strptime('2016-01-01', DATE_FORMAT).replace(hour=2)],[1,60,datetime.strptime('2016-01-01',DATE_FORMAT).replace(hour=3)],[1,60,datetime.strptime('2016-01-01',DATE_FORMAT).replace(hour=4)]]
+        days = from_db_rows(results, 60)
+        expected_days = {}
+        self.assertEquals(days, expected_days)
+
+    def test_to_null_2(self):
+        results = [[1,59,datetime.strptime('2016-01-01', DATE_FORMAT)],[0,60,datetime.strptime('2016-01-01', DATE_FORMAT).replace(hour=1)],[0,60,datetime.strptime('2016-01-01', DATE_FORMAT).replace(hour=2)],[1,60,datetime.strptime('2016-01-01',DATE_FORMAT).replace(hour=3)],[1,60,datetime.strptime('2016-01-01',DATE_FORMAT).replace(hour=4)],[1,60,datetime.strptime('2016-01-01',DATE_FORMAT).replace(hour=5)]]
+        days = from_db_rows(results, 60)
+        expected_days = {}
+        self.assertEquals(days, expected_days)
 
 if __name__ == '__main__':
     unittest.main()
