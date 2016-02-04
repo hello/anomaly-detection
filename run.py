@@ -5,6 +5,7 @@ import yaml
 from pytz import timezone
 from datetime import datetime
 from datetime import timedelta
+import time
 import psycopg2
 
 
@@ -24,10 +25,24 @@ def main():
     logger.info("Loaded configurations %s", config)
 
     while True:
-        tracker = app.Tracker(config['redis'])
+        try:
+            tracker = app.Tracker(config['redis'])
+            tracker.ping()
+            logger.info("Pinged redis")
+        except:
+            logger.debug("Unable to ping redis; sleeping for 10 min")
+            time.sleep(60 * 10)
+            continue
 
-        conn_sensors = psycopg2.connect(**config['sensors_db'])
-        conn_anomaly = psycopg2.connect(**config['anomaly'])
+        try:
+            conn_sensors = psycopg2.connect(**config['sensors_db'])
+            conn_anomaly = psycopg2.connect(**config['anomaly'])
+            logger.info("Connected to sensors_db and anomaly")
+        except psycopg2.Error as error:
+            logger.debug(error)
+            logger.debug("Sleeping for 10 min")
+            time.sleep(60 * 10)
+            continue
 
         dbscan_params_meta = config['dbscan_params_meta']
 

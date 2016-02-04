@@ -1,7 +1,7 @@
 import redis
 from datetime import datetime
 from pytz import timezone
-from hellopy import DATE_FORMAT
+from hellopy import DATE_FORMAT, DATE_HR_FORMAT
 
 class Tracker(object):
     def __init__(self, redis_config):
@@ -10,9 +10,11 @@ class Tracker(object):
         now_utc = datetime.utcnow()
         self.success_key = "%s|%s" % ("suripu-anomaly-success", now_utc.strftime(DATE_FORMAT))
         self.r.expire(self.success_key, 3600 * 12)
+#        self.r.sadd(self.success_key, -999)
 
-        self.fail_key = "%s|%s" %("suripu-anomaly-fail", now_utc.strftime(DATE_FORMAT))
+        self.fail_key = "%s|%s" %("suripu-anomaly-fail", now_utc.strftime(DATE_HR_FORMAT))
         self.r.expire(self.fail_key, 3600 * 1)
+#        self.r.sadd(self.fail_key, -999)
 
     def track_success(self, account_id):
         self.r.sadd(self.success_key, account_id)
@@ -31,3 +33,7 @@ class Tracker(object):
 
     def query_keys(self):
         return self.r.keys()
+
+    def ping(self):
+        return self.r.ping()
+

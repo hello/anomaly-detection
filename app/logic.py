@@ -26,7 +26,6 @@ def chunks(l, n):
 
 DATE_FORMAT = '%Y-%m-%d'
 
-
 def get_active_accounts(conn):
     hour_in_millis = 3600000
 
