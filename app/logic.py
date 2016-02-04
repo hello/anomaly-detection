@@ -44,10 +44,9 @@ def get_active_accounts(conn):
         logging.info("Select returned %d total active account_ids", len(rows))
         for row in rows:
             if row[1] < allowed_offset:
-                print row[1], row[0]
                 continue
             account_ids.add(row[0])
-        logging.info("Filtering for current allowed offset_millis=%d returned %d eligible active account_ids", allowed_offset, len(account_ids))
+        logging.info("Filtering for current allowed offset_millis>%d returned %d eligible active account_ids", allowed_offset, len(account_ids))
     return account_ids
 
 def normalize_data(compressedMatrix):
@@ -83,7 +82,7 @@ def feature_extraction(data_dict):
         matrix.append(feature_vector)
     return matrix
 
-def pull_data(conn_sensors, account_id, start, end):
+def pull_data(conn_sensors, account_id, start):
     results = []
     with conn_sensors.cursor() as cursor:
         try:
@@ -92,11 +91,10 @@ def pull_data(conn_sensors, account_id, start, end):
                                     FROM prod_sense_data
                                     WHERE account_id = %(account_id)s
                                     AND local_utc_ts > %(start)s
-                                    AND local_utc_ts <= %(end)s
                                     AND extract('hour' from local_utc_ts) < 6
                                     GROUP BY local_utc_ts)
                                 GROUP BY hour
-                                ORDER BY hour ASC""", dict(account_id=account_id, start=start, end=end))
+                                ORDER BY hour ASC""", dict(account_id=account_id, start=start))
             rows = cursor.fetchall()
 
             for row in rows:
@@ -169,7 +167,7 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
     now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
     thirty_days_ago = now + timedelta(days=-limit)
 
-    results = pull_data(conn_sensors, account_id, thirty_days_ago, now)
+    results = pull_data(conn_sensors, account_id, thirty_days_ago)
 
     if not results:
         logging.warn("No data for user %d", account_id)
