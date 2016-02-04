@@ -30,7 +30,7 @@ def main():
         conn_anomaly = psycopg2.connect(**config['anomaly'])
 
         dbscan_params_meta = config['dbscan_params_meta']
-        
+
         account_ids = app.get_active_accounts(conn_sensors)
         logger.debug("Found %d account_ids", len(account_ids))
         
@@ -41,12 +41,14 @@ def main():
                 continue
             run_success = app.run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta)        
             if run_success:
-                tracker.track(account_id)
-                logger.debug("Processed %s", account_id)
+                tracker.track_success(account_id)
+            else:
+                tracker.track_fail(account_id)
+            logger.debug("Processed %s", account_id)
 
         logger.info("Iteration done")
         logger.info("Tracker has keys %s", tracker.query_keys())
-        logger.info("For date %s currently %d unique account_ids tracked out of roughly %d accounts attempted", tracker.tracking_key, len(tracker.query_tracking_key()), len(account_ids))
+        logger.info("For date %s currently %d success unique account_ids %d fail unique account_ids tracked out of roughly %d accounts attempted", tracker.success_key, len(tracker.query_success_key()), len(tracker.query_fail_key()), len(account_ids))
 
 if __name__ == '__main__':
     main()

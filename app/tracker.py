@@ -8,17 +8,26 @@ class Tracker(object):
         self.redis_config = redis_config
         self.r = redis.Redis(**redis_config)
         now_utc = datetime.utcnow()
-        self.tracking_key = "%s|%s" % ("suripu-anomaly", now_utc.strftime(DATE_FORMAT))
-        self.r.expire(self.tracking_key, 3600 * 12)
+        self.success_key = "%s|%s" % ("suripu-anomaly-success", now_utc.strftime(DATE_FORMAT))
+        self.r.expire(self.success_key, 3600 * 12)
 
-    def track(self, account_id):
-        self.r.sadd(self.tracking_key, account_id)
+        self.fail_key = "%s|%s" %("suripu-anomaly-fail", now_utc.strftime(DATE_FORMAT))
+        self.r.expire(self.fail_key, 3600 * 1)
+
+    def track_success(self, account_id):
+        self.r.sadd(self.success_key, account_id)
+
+    def track_fail(self, account_id):
+        self.r.sadd(self.fail_key, account_id)
 
     def seen_before(self, account_id):
-        return self.r.sismember(self.tracking_key, account_id)
+        return self.r.sismember(self.success_key, account_id) or self.r.sismember(self.fail_key, account_id)
 
-    def query_tracking_key(self):
-        return self.r.smembers(self.tracking_key)
+    def query_success_key(self):
+        return self.r.smembers(self.success_key)
+
+    def query_fail_key(self):
+        return self.r.smembers(self.fail_key)
 
     def query_keys(self):
         return self.r.keys()
