@@ -31,9 +31,6 @@ class Tracker(object):
     def query_fail_key(self):
         return self.r.smembers(self.fail_key)
 
-    def query_keys(self):
-        return self.r.keys()
-
     def ping(self):
         return self.r.ping()
 
