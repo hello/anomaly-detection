@@ -24,6 +24,8 @@ dbscan_params_meta:
         limit_filter: 7 
         alg_id: 1
         max_anom_density: 99 
+        insert_question: False
+        sensor: light
     dbscan_params_2:
         eps_multi: 1.0
         min_eps: 3.0
@@ -31,6 +33,8 @@ dbscan_params_meta:
         limit_filter: 20 
         alg_id: 4
         max_anom_density: 3 
+        insert_question: True
+        sensor: light
     dbscan_params_3:
         eps_multi: 1.0
         min_eps: 3.0
@@ -38,3 +42,14 @@ dbscan_params_meta:
         limit_filter: 29 
         alg_id: 3
         max_anom_density: 99 
+        insert_question: False
+        sensor: light
+
+redis:
+    host: 
+    port: 
+
+questions_endpt_params:
+    url: https://dev-admin.hello.is
+    authorization: 'Bearer: 25.74df3bb1a86b490e835e874760d96890'
+    content-type: application/json

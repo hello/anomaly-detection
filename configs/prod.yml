@@ -14,10 +14,6 @@ anomaly:
     dbname: research
     connect_timeout: 3
 
-redis:
-    host: stats.xoe7je.0001.use1.cache.amazonaws.com
-    port: 6379
-
 dbscan_params_meta:
     dbscan_params_1:
         eps_multi: 1.0
@@ -26,6 +22,8 @@ dbscan_params_meta:
         limit_filter: 7 
         alg_id: 1
         max_anom_density: 99 
+        insert_question: False
+        sensor: light
     dbscan_params_2:
         eps_multi: 1.0
         min_eps: 3.0
@@ -33,6 +31,8 @@ dbscan_params_meta:
         limit_filter: 20 
         alg_id: 4
         max_anom_density: 3 
+        insert_question: True
+        sensor: light
     dbscan_params_3:
         eps_multi: 1.0
         min_eps: 3.0
@@ -40,3 +40,15 @@ dbscan_params_meta:
         limit_filter: 29 
         alg_id: 3
         max_anom_density: 99 
+        insert_question: False
+        sensor: light
+
+redis:
+    host: stats.xoe7je.0001.use1.cache.amazonaws.com
+    port: 6379
+
+questions_endpt_params:
+    url: https://admin-api.hello.is
+    authorization: 'Bearer 21.f5dff53172604f42ba620700181a214a'
+    content-type: application/json
+

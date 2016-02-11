@@ -5,6 +5,7 @@ import itertools
 from pytz import timezone
 from datetime import datetime
 from datetime import timedelta
+import requests
 # temp
 
 import logging
@@ -158,7 +159,22 @@ def write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, ano
     if now_start_of_day in anomaly_days:
         write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
 
-def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
+def insert_anomaly_question(questions_endpt_params, account_id, sensor, now_date_string):
+    url = questions_endpt_params['url']
+    headers = {'authorization': questions_endpt_params['authorization'], 'content-type': questions_endpt_params['content-type']}
+    payload = "{\n    \"account_id\" : \"%d\",\n    \"sensor\" : \"%s\",\n    \"night_date\": \"%s\" \n}" % (account_id, sensor, now_date_string)
+    logging.info("HEADERS ARE %s" % headers)
+    logging.info("PAYLOAD IS %s" %payload)
+
+    try:
+        response = requests.request("POST", url, data=payload, headers=headers)
+        logging.info("Request sent to admin endpoint to insert anomaly question for account_id %d with response %s" % (account_id, response.text))
+        return True
+    except requests.exceptions.RequestException as e:
+        logging.debug(e)
+    return False
+
+def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_endpt_params):
     limit = 30
 
     now = datetime.now()
@@ -195,7 +211,12 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta):
             continue
         anomaly_days = get_anomaly_days(sorted_days, labels, account_id)
         write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days)  
-
+        if dbscan_params['insert_question']=='False':
+            continue
+        if now_start_of_day in anomaly_days:
+            question_inserted = insert_anomaly_question(questions_endpt_params, account_id, dbscan_params['sensor'], now_date_string)
+        if not question_inserted:
+            return 0
     return 1 
 
 if __name__ == '__main__':
