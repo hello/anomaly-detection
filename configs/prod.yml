@@ -49,6 +49,6 @@ redis:
 
 questions_endpt_params:
     url: https://admin-api.hello.is
-    authorization: 'Bearer 21.f5dff53172604f42ba620700181a214a'
+    authorization: 
     content-type: application/json
 
