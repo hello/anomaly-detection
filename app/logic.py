@@ -162,10 +162,10 @@ def write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, ano
 def insert_anomaly_question(questions_endpt_params, account_id, sensor, now_date_string):
     url = questions_endpt_params['url']
     headers = {'authorization': token, 'content-type': 'application/json'}
-    payload = "{\n    \"account_id\" : \"%d\",\n    \"sensor\" : \"%s\",\n    \"night_date\": \"%s\" \n}" % (account_id, sensor, now_date_string)
+    payload = {'account_id': account_id, 'sensor': sensor, 'night_date': now_date_string}
     logging.info("PAYLOAD IS %s" %payload)
     try:
-        response = requests.request("POST", url, data=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers)
         logging.info("Request sent to admin endpoint to insert anomaly question for account_id %d with response %s" % (account_id, response.text))
         return True
     except requests.exceptions.RequestException as e:
