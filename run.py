@@ -44,6 +44,7 @@ def main():
             time.sleep(60 * 10)
             continue
 
+        questions_endpt_params = config['questions_endpt_params']
         dbscan_params_meta = config['dbscan_params_meta']
 
         account_ids = app.get_active_accounts(conn_sensors)
@@ -56,7 +57,7 @@ def main():
 #                logger.debug("Skipping account: %d since we've already seen it", account_id)
                 continue
             no_accounts_processed = False
-            run_success = app.run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta)        
+            run_success = app.run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_endpt_params)        
             if run_success:
                 tracker.track_success(account_id)
             else:
