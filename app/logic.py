@@ -18,7 +18,7 @@ from anomalyDAO import write_anomaly_result, write_anomaly_result_raw
 
 logger = logging.getLogger(__name__)
 
-
+token = os.environ["ADMIN_QUESTIONS_WRITE_TOKEN"]
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -161,11 +161,9 @@ def write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, ano
 
 def insert_anomaly_question(questions_endpt_params, account_id, sensor, now_date_string):
     url = questions_endpt_params['url']
-    headers = {'authorization': questions_endpt_params['authorization'], 'content-type': questions_endpt_params['content-type']}
+    headers = {'authorization': token, 'content-type': 'application/json'}
     payload = "{\n    \"account_id\" : \"%d\",\n    \"sensor\" : \"%s\",\n    \"night_date\": \"%s\" \n}" % (account_id, sensor, now_date_string)
-    logging.info("HEADERS ARE %s" % headers)
     logging.info("PAYLOAD IS %s" %payload)
-
     try:
         response = requests.request("POST", url, data=payload, headers=headers)
         logging.info("Request sent to admin endpoint to insert anomaly question for account_id %d with response %s" % (account_id, response.text))
@@ -215,8 +213,8 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
             continue
         if now_start_of_day in anomaly_days:
             question_inserted = insert_anomaly_question(questions_endpt_params, account_id, dbscan_params['sensor'], now_date_string)
-        if not question_inserted:
-            return 0
+            if not question_inserted:
+                return 0
     return 1 
 
 if __name__ == '__main__':

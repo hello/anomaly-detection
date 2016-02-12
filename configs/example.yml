@@ -47,6 +47,4 @@ redis:
 
 questions_endpt_params:
     url: http://localhost:5678/v1/questions/anomaly
-    authorization: 
-    content-type: application/json
 
