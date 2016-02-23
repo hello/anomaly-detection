@@ -1,5 +1,4 @@
 import psycopg2
-import os
 import numpy as np
 import itertools
 from pytz import timezone
@@ -18,7 +17,8 @@ from anomalyDAO import write_anomaly_result, write_anomaly_result_raw
 
 logger = logging.getLogger(__name__)
 
-token = os.environ["ADMIN_QUESTIONS_WRITE_TOKEN"]
+with open('/etc/anomaly_admin_token.txt') as f:
+    token = f.read().strip()
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
