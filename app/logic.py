@@ -163,7 +163,7 @@ def insert_anomaly_question(questions_endpt_params, account_id, sensor, now_date
     url = questions_endpt_params['url']
     headers = {'authorization': token, 'content-type': 'application/json'}
     payload = {'account_id': account_id, 'sensor': sensor, 'night_date': now_date_string}
-    logging.info("PAYLOAD IS %s" %payload)
+#    logging.info("PAYLOAD IS %s" %payload)
     try:
         response = requests.post(url, json=payload, headers=headers)
         logging.info("Request sent to admin endpoint to insert anomaly question for account_id %d with response %s" % (account_id, response.text))

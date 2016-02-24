@@ -22,7 +22,7 @@ def write_anomaly_result(conn, account_id, target_date, alg_id):
         with conn.cursor() as cur:
             query = cur.mogrify("INSERT INTO anomaly_results (account_id, target_date, alg_id) VALUES (%s, %s, %s) RETURNING id", 
                                 (account_id, target_date, alg_id))
-            logging.info("query: %s", query)
+#            logging.info("query: %s", query)
             cur.execute(query)
             inserted_row = cur.fetchone()
 
@@ -61,7 +61,7 @@ def write_anomaly_result_raw(conn, account_id, target_date, anomaly_days, alg_id
         with conn.cursor() as cur:
             query = cur.mogrify("INSERT INTO anomaly_results_raw (account_id, target_date, anomaly_days, alg_id) VALUES (%s, %s, %s, %s) RETURNING id", 
                                 (account_id, target_date, anomaly_days, alg_id))
-            logging.info("query: %s", query)
+#            logging.info("query: %s", query)
             cur.execute(query)
             inserted_row = cur.fetchone()
 
