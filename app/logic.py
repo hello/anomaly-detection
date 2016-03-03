@@ -34,7 +34,8 @@ def get_active_accounts(conn):
     recent_days = now_utc + timedelta(days=-3)
     
     current_utc_hour = now_utc.hour
-    allowed_offset = (-current_utc_hour + 6) * hour_in_millis
+    allowed_offset_min = (-current_utc_hour + 6) * hour_in_millis
+    allowed_offset_max = (-current_utc_hour + 8) * hour_in_millis
 
     account_ids = set()
     with conn.cursor() as cursor:
@@ -43,10 +44,12 @@ def get_active_accounts(conn):
         rows = cursor.fetchall()
         logging.info("Select returned %d total active account_ids", len(rows))
         for row in rows:
-            if row[1] < allowed_offset:
+            if row[1] < allowed_offset_min:
+                continue
+            elif row[1] > allowed_offset_max:
                 continue
             account_ids.add(row[0])
-        logging.info("Filtering for current allowed offset_millis>%d returned %d eligible active account_ids", allowed_offset, len(account_ids))
+        logging.info("Filtering for current %d<allowed_offset_millis<%d returned %d eligible active account_ids", allowed_offset_min, allowed_offset_max, len(account_ids))
     return account_ids
 
 def normalize_data(compressedMatrix):
