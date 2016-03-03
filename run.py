@@ -25,6 +25,7 @@ def main():
     logger.info("Loaded configurations %s", config)
 
     while True:
+        iteration_start = datetime.now()
         try:
             tracker = app.Tracker(config['redis'])
             tracker.ping()
@@ -64,7 +65,11 @@ def main():
                 tracker.track_fail(account_id)
 #            logger.debug("Processed %s", account_id)
 
-        logger.info("Iteration done")
+        iteration_end = datetime.now()
+        iteration_mins = (iteration_end - iteration_start)/60.0
+        iteration_start_str = datetime.strftime(iteration_start, "%Y-%m-%d %H:%M:%S:%f")
+        iteration_end_str = datetime.strftime(iteration_end, "%Y-%m-%d %H:%M:%S:%f")
+        logger.info("Iteration done took %d mins start: %s end: %s", iterations_mins, iteration_start_str, iteration_end_str)
 #        logger.info("Tracker has keys %s", tracker.query_keys())
         logger.info("For date %s currently %d success unique account_ids %d fail unique account_ids tracked out of roughly %d accounts attempted", tracker.success_key, len(tracker.query_success_key()), len(tracker.query_fail_key()), len(account_ids))
 
