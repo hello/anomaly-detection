@@ -42,14 +42,16 @@ def get_active_accounts(conn):
         cursor.execute("""SELECT DISTINCT(account_id), MAX(offset_millis) FROM tracker_motion_master WHERE local_utc_ts > %(start)s GROUP BY account_id ORDER BY account_id;""", dict(start=recent_days))
 
         rows = cursor.fetchall()
-        logging.info("Select returned %d total active account_ids", len(rows))
+        logging.info("active_accounts=%d", len(rows))
         for row in rows:
             if row[1] < allowed_offset_min:
                 continue
             elif row[1] > allowed_offset_max:
                 continue
             account_ids.add(row[0])
-        logging.info("Filtering for current %d<allowed_offset_millis<%d returned %d eligible active account_ids", allowed_offset_min, allowed_offset_max, len(account_ids))
+        logging.info("""allowed_offset_min=%d
+                        allowed_offset_max=%d
+                        eligible_accounts=%d""", allowed_offset_min, allowed_offset_max, len(account_ids))
     return account_ids
 
 def normalize_data(compressedMatrix):
@@ -104,10 +106,10 @@ def pull_data(conn_sensors, account_id, start):
                 results.append(row)
 
         except psycopg2.Error as e:
-            logging.debug("Encountered psycopg2 error %s" % e.pgerror) 
+            logging.debug("error=psycopg psycopg_error=%s" % e.pgerror) 
             pass
 
-    logging.info("pulled data with results length (%d)" % len(results))
+    logging.info("one_data_length=%d" % len(results))
     return results
 
 def run_alg(days, dbscan_params, account_id):
@@ -118,22 +120,22 @@ def run_alg(days, dbscan_params, account_id):
     alg_id = dbscan_params['alg_id']
 
     if len(days) < limit_filter:
-        logging.warn("not enough days (%d) for user %d", len(days), account_id)
+        logging.warn("not_enough_days=%d account_id=%d", len(days), account_id)
         return np.asarray([])
 
     matrix = feature_extraction(days)
     if not matrix:
-        logging.error("No feature extracted. Error?")
+        logging.error("error=no_feature_extracted")
         return np.asarray([])
     
     normalized_features = normalize_data(matrix)
     if len(normalized_features) <= 1:
-        logging.warn("Normalized features empty. len(normalized_features)=%s" % str(len(normalized_features)) )
+        logging.warn("error=norm_feat_empty len_norm_feat=%s" % str(len(normalized_features)) )
         return np.asarray([])
 
     eps = get_eps(normalized_features)
     if eps <= 0:
-        logging.error("Incorrect input passed to get_eps() eps=%s." % eps)
+        logging.error("error=incorrect_input_to_get_eps eps=%s." % eps)
         return np.asarray([])
 
     db = DBSCAN(eps=max(eps_multi*eps, min_eps), min_samples=min_pts)
@@ -146,7 +148,7 @@ def get_anomaly_days(sorted_days, labels, account_id):
     for day, anomaly in zip(sorted_days, labels):
         if anomaly == -1:
             anomaly_days.append(datetime.strptime(day, DATE_FORMAT))
-            logging.info("%s is an anomaly for account %d", day, account_id)
+            logging.info("anom_date=%s account_id=%d", day, account_id)
     return anomaly_days
 
 def write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days):
@@ -157,7 +159,7 @@ def write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, ano
     write_anomaly_result_raw(conn_anomaly, account_id, now_start_of_day, anomaly_days, alg_id)
 
     if len(anomaly_days) >= max_anom_density:
-        logging.info("Anomaly density %d is too high for account %d", len(anomaly_days), account_id)
+        logging.info("anom_density=%d acount_id=%d", len(anomaly_days), account_id)
         return
     if now_start_of_day in anomaly_days:
         write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
@@ -169,7 +171,7 @@ def insert_anomaly_question(questions_endpt_params, account_id, sensor, now_date
 #    logging.info("PAYLOAD IS %s" %payload)
     try:
         response = requests.post(url, json=payload, headers=headers)
-        logging.info("Request sent to admin endpoint to insert anomaly question for account_id %d with response %s" % (account_id, response.text))
+        logging.info("action=request_question_endpt account_id=%d response=%s" % (account_id, response.text))
         return True
     except requests.exceptions.RequestException as e:
         logging.debug(e)
@@ -186,13 +188,13 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
     results = pull_data(conn_sensors, account_id, thirty_days_ago)
 
     if not results:
-        logging.warn("No data for user %d", account_id)
+        logging.warn("skip_reason=no_data account_id=%d", account_id)
         return 0 
 
     days = from_db_rows(results)
 
     if len(days) == 0:
-        logging.warn("Results pulled but no day of complete data for user %d", account_id)
+        logging.warn("skip_reason=results_pulled_but_no_day_complete_data account_id=%d", account_id)
         return 0 
 
     sorted_days = sorted(days.keys())
@@ -201,14 +203,14 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
         num_days = len(sorted_days)
         earliest_day = sorted_days[0]
         latest_day = sorted_days[-1]
-        logging.warn("not enough data on target date (%s) for user %d num_days extracted (%d) from (%s) to (%s)", now, account_id, num_days, earliest_day, latest_day)
+        logging.warn("skip_reason=not_enough_data_target_date target_date=%s account_id=%d num_days_extracted=%d extract_start=%s extrat_end=%s", now, account_id, num_days, earliest_day, latest_day)
         return 0
 
     for param_index in dbscan_params_meta:
         dbscan_params = dbscan_params_meta[param_index]
         labels = run_alg(days, dbscan_params, account_id)    
         if labels.size == 0:
-            logging.info("Could not generate labels, see log message for run_alg()")
+            logging.info("error=could_not_generate_lables_see_run_alg()")
             continue
         anomaly_days = get_anomaly_days(sorted_days, labels, account_id)
         write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days)  

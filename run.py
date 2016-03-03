@@ -22,26 +22,26 @@ def main():
     with open(sys.argv[1], 'r') as f:
         c = yaml.load(f)
         config.update(c)
-    logger.info("Loaded configurations %s", config)
+    logger.info("configs_loaded=%s", config)
 
     while True:
         iteration_start = datetime.now()
         try:
             tracker = app.Tracker(config['redis'])
             tracker.ping()
-            logger.info("Pinged redis")
+            logger.info("action=pinged_redis")
         except:
-            logger.debug("Unable to ping redis; sleeping for 10 min")
+            logger.debug("error=unable_to_ping_redis sleep=10min")
             time.sleep(60 * 10)
             continue
 
         try:
             conn_sensors = psycopg2.connect(**config['sensors_db'])
             conn_anomaly = psycopg2.connect(**config['anomaly'])
-            logger.info("Connected to sensors_db and anomaly")
+            logger.info("conn_psycopg=True")
         except psycopg2.Error as error:
             logger.debug(error)
-            logger.debug("Sleeping for 10 min")
+            logger.debug("error=psycopg_conn sleep=10min")
             time.sleep(60 * 10)
             continue
 
@@ -49,7 +49,7 @@ def main():
         dbscan_params_meta = config['dbscan_params_meta']
 
         account_ids = app.get_active_accounts(conn_sensors)
-        logger.debug("Found %d account_ids", len(account_ids))
+        logger.debug("eligible_accounts=%d", len(account_ids))
 
         no_accounts_processed = True        
         for account_id in account_ids:
@@ -69,11 +69,18 @@ def main():
         iteration_mins = (iteration_end - iteration_start).total_seconds()/60.0
         iteration_start_str = datetime.strftime(iteration_start, "%Y-%m-%d %H:%M:%S:%f")
         iteration_end_str = datetime.strftime(iteration_end, "%Y-%m-%d %H:%M:%S:%f")
-        logger.info("Iteration done took %d mins start: %s end: %s.\n For date %s currently %d success unique account_ids %d fail unique account_ids tracked out of roughly %d accounts attempted", iteration_mins, iteration_start_str, iteration_end_str, tracker.success_key, len(tracker.query_success_key()), len(tracker.query_fail_key()), len(account_ids))
+        logger.info(""" action=Iteration_done 
+                        iter_duration_mins=%d 
+                        iter_start=%s 
+                        iter_end=%s 
+                        iter_date=%s
+                        insert_success=%d
+                        insert_fail=%d
+                        insert_attempted=%d """, iteration_mins, iteration_start_str, iteration_end_str, tracker.success_key, len(tracker.query_success_key()), len(tracker.query_fail_key()), len(account_ids))
 #        logger.info("Tracker has keys %s", tracker.query_keys())
 
         if no_accounts_processed:
-            logger.info("No accounts processed on last loop because all tracked. Sleeping for 5 min")
+            logger.info("reason=no_accounts_processed_last_loop sleep=5min")
             time.sleep(60 * 5) 
 
 if __name__ == '__main__':
