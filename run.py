@@ -69,7 +69,14 @@ def main():
         iteration_mins = (iteration_end - iteration_start).total_seconds()/60.0
         iteration_start_str = datetime.strftime(iteration_start, "%Y-%m-%d %H:%M:%S:%f")
         iteration_end_str = datetime.strftime(iteration_end, "%Y-%m-%d %H:%M:%S:%f")
-        logger.info("Iteration done took %d mins start: %s end: %s.\n For date %s currently %d success unique account_ids %d fail unique account_ids tracked out of roughly %d accounts attempted", iteration_mins, iteration_start_str, iteration_end_str, tracker.success_key, len(tracker.query_success_key()), len(tracker.query_fail_key()), len(account_ids))
+        logger.info(""" action=Iteration_done 
+                        iter_duration_mins=%d 
+                        iter_start=%s 
+                        iter_end=%s 
+                        iter_date=%s
+                        insert_success=%d
+                        insert_fail=%d
+                        insert_attempted=%d """, iteration_mins, iteration_start_str, iteration_end_str, tracker.success_key, len(tracker.query_success_key()), len(tracker.query_fail_key()), len(account_ids))
 #        logger.info("Tracker has keys %s", tracker.query_keys())
 
         if no_accounts_processed:
