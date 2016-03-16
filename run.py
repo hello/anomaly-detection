@@ -52,7 +52,7 @@ def main():
         logger.debug("eligible_accounts=%d", len(account_ids))
 
         no_accounts_processed = True        
-        for account_id in account_ids:
+        for account_id in [21561]:
 #            logger.debug("Iteration on account_id %d", account_id)
             if tracker.seen_before(account_id):
 #                logger.debug("Skipping account: %d since we've already seen it", account_id)

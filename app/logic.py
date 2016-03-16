@@ -211,11 +211,11 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
         labels = run_alg(days, dbscan_params, account_id)    
         if labels.size == 0:
             logging.info("error=could_not_generate_lables_see_run_alg()")
-            continue
+            return 1 
         anomaly_days = get_anomaly_days(sorted_days, labels, account_id)
         write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days)  
         if dbscan_params['insert_question']=='False':
-            continue
+            return 1 
         if now_start_of_day in anomaly_days:
             question_inserted = insert_anomaly_question(questions_endpt_params, account_id, dbscan_params['sensor'], now_date_string)
             if not question_inserted:
