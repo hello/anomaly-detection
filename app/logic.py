@@ -39,7 +39,7 @@ def get_active_accounts(conn):
 
     account_ids = set()
     with conn.cursor() as cursor:
-        cursor.execute("""SELECT DISTINCT(account_id), MAX(offset_millis) FROM tracker_motion_master WHERE local_utc_ts > %(start)s GROUP BY account_id ORDER BY account_id;""", dict(start=recent_days))
+        cursor.execute("""SELECT DISTINCT(account_id), MAX(offset_millis) FROM tracker_motion_master WHERE local_utc_ts > '%(start)s' GROUP BY account_id ORDER BY account_id;""", dict(start=recent_days))
 
         rows = cursor.fetchall()
         logging.info("active_accounts=%d", len(rows))
