@@ -160,9 +160,9 @@ def write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, ano
 
     if len(anomaly_days) >= max_anom_density:
         logging.info("anom_density=%d acount_id=%d", len(anomaly_days), account_id)
-        return
+        return False
     if now_start_of_day in anomaly_days:
-        write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
+        return write_anomaly_result(conn_anomaly, account_id, now_start_of_day, alg_id)
 
 def insert_anomaly_question(questions_endpt_params, account_id, sensor, now_date_string):
     url = questions_endpt_params['url']
@@ -178,6 +178,9 @@ def insert_anomaly_question(questions_endpt_params, account_id, sensor, now_date
     return False
 
 def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_endpt_params):
+    """
+    returns 'run success' which instructs redis to track account_id or not
+    """
     limit = 30
 
     now = datetime.now()
@@ -189,13 +192,13 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
 
     if not results:
         logging.warn("skip_reason=no_data account_id=%d", account_id)
-        return 0 
+        return True 
 
     days = from_db_rows(results)
 
     if len(days) == 0:
         logging.warn("skip_reason=results_pulled_but_no_day_complete_data account_id=%d", account_id)
-        return 0 
+        return True 
 
     sorted_days = sorted(days.keys())
 
@@ -204,23 +207,25 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
         earliest_day = sorted_days[0]
         latest_day = sorted_days[-1]
         logging.warn("skip_reason=not_enough_data_target_date target_date=%s account_id=%d num_days_extracted=%d extract_start=%s extrat_end=%s", now, account_id, num_days, earliest_day, latest_day)
-        return 0
+        return True 
 
     for param_index in dbscan_params_meta:
         dbscan_params = dbscan_params_meta[param_index]
         labels = run_alg(days, dbscan_params, account_id)    
         if labels.size == 0:
-            logging.info("error=could_not_generate_lables_see_run_alg()")
-            return 1 
+            logging.info("error=could_not_generate_labels_see_run_alg()")
+            continue 
         anomaly_days = get_anomaly_days(sorted_days, labels, account_id)
-        write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days)  
+        wrote_results = write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days) #Results are not written in anom density too high 
+        if not wrote_results:
+            continue #Note that if psycopg2 insertion fails, we assume it is because it violated unique index constraint from multiple runs. TODO: specify type of error
         if dbscan_params['insert_question']=='False':
-            return 1 
+            continue #Don't insert question, try the next algorithm
         if now_start_of_day in anomaly_days:
             question_inserted = insert_anomaly_question(questions_endpt_params, account_id, dbscan_params['sensor'], now_date_string)
             if not question_inserted:
-                return 0
-    return 1 
+                return False 
+    return True 
 
 if __name__ == '__main__':
     main()
