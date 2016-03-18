@@ -27,7 +27,7 @@ def chunks(l, n):
 
 DATE_FORMAT = '%Y-%m-%d'
 
-def get_active_accounts(conn):
+def get_active_accounts(conn, isodd):
     hour_in_millis = 3600000
 
     now_utc = datetime.utcnow()
@@ -39,7 +39,9 @@ def get_active_accounts(conn):
 
     account_ids = set()
     with conn.cursor() as cursor:
-        cursor.execute("""SELECT DISTINCT(account_id), MAX(offset_millis) FROM tracker_motion_master WHERE local_utc_ts > %(start)s GROUP BY account_id ORDER BY account_id;""", dict(start=recent_days))
+        isodd = str(int(isodd))
+        print type(isodd)
+        cursor.execute("""SELECT DISTINCT(account_id), MAX(offset_millis) FROM tracker_motion_master WHERE local_utc_ts > %(start)s AND MOD(account_id,2)=%(odd)s GROUP BY account_id ORDER BY account_id;""", dict(start=recent_days, odd=isodd))
 
         rows = cursor.fetchall()
         logging.info("active_accounts=%d", len(rows))
