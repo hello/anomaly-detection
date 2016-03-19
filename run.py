@@ -24,10 +24,7 @@ def main():
         config.update(c)
     logger.info("configs_loaded=%s", config)
 
-    if sys.argv[2] == 'odd':
-        isodd=True
-    else:
-        isodd=False
+    isodd = int(sys.argv[2])%2
 
     while True:
         iteration_start = datetime.now()
