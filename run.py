@@ -24,6 +24,8 @@ def main():
         config.update(c)
     logger.info("configs_loaded=%s", config)
 
+    isodd = int(sys.argv[2])%2
+
     while True:
         iteration_start = datetime.now()
         try:
@@ -48,7 +50,7 @@ def main():
         questions_endpt_params = config['questions_endpt_params']
         dbscan_params_meta = config['dbscan_params_meta']
 
-        account_ids = app.get_active_accounts(conn_sensors)
+        account_ids = app.get_active_accounts(conn_sensors, isodd)
         logger.debug("eligible_accounts=%d", len(account_ids))
 
         no_accounts_processed = True        
