@@ -117,11 +117,11 @@ def run_alg(days, dbscan_params, account_id):
     eps_multi = dbscan_params['eps_multi']
     min_eps = dbscan_params['min_eps']
     min_pts = dbscan_params['min_pts']
-    limit_filter = dbscan_params['limit_filter']
+    limit_filter = int(dbscan_params['limit_filter'])
     alg_id = dbscan_params['alg_id']
 
     if len(days) < limit_filter:
-        logging.warn("not_enough_days=%d account_id=%d", len(days), account_id)
+        logging.warn("not_enough_days=%d limit_filter=%d account_id=%d alg_id=%s", len(days), limit_filter, account_id, alg_id)
         return np.asarray([])
 
     matrix = feature_extraction(days)
