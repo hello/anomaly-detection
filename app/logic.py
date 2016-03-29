@@ -220,7 +220,7 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
         wrote_results = write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days) #Results are not written in anom density too high 
         if not wrote_results:
             continue #Note that if psycopg2 insertion fails, we assume it is because it violated unique index constraint from multiple runs. TODO: specify type of error
-        if dbscan_params['insert_question']=='False':
+        if dbscan_params['insert_question']==False:
             continue #Don't insert question, try the next algorithm
         if now_start_of_day in anomaly_days:
             question_inserted = insert_anomaly_question(questions_endpt_params, account_id, dbscan_params['sensor'], now_date_string)
