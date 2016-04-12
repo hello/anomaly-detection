@@ -34,7 +34,7 @@ def get_active_accounts(conn, isodd):
     recent_days = now_utc + timedelta(days=-3)
     
     current_utc_hour = now_utc.hour
-    allowed_offset_min = (-current_utc_hour + 6) * hour_in_millis
+    allowed_offset_min = int((-current_utc_hour + 6.5) * hour_in_millis)
     allowed_offset_max = (-current_utc_hour + 8) * hour_in_millis
 
     account_ids = set()
@@ -110,7 +110,11 @@ def pull_data(conn_sensors, account_id, start):
             logging.debug("error=psycopg psycopg_error=%s" % e.pgerror) 
             pass
 
-    logging.info("one_data_length=%d" % len(results))
+    if len(results)>0:
+        logging.info("one_data_length=%d last_local_utc_ts_data=%s" % (len(results), results[-1]))
+    else:
+        logging.info("one_data_length=%d" % len(results))
+    
     return results
 
 def run_alg(days, dbscan_params, account_id):
