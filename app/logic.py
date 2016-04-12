@@ -110,7 +110,11 @@ def pull_data(conn_sensors, account_id, start):
             logging.debug("error=psycopg psycopg_error=%s" % e.pgerror) 
             pass
 
-    logging.info("one_data_length=%d last_local_utc_ts_data=%s" % (len(results), results[-1]))
+    if len(results)>0:
+        logging.info("one_data_length=%d last_local_utc_ts_data=%s" % (len(results), results[-1]))
+    else:
+        logging.info("one_data_length=%d" % len(results))
+    
     return results
 
 def run_alg(days, dbscan_params, account_id):
