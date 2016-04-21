@@ -117,6 +117,17 @@ def pull_data(conn_sensors, account_id, start):
     
     return results
 
+def pull_max_lux_data(conn_sensors, date, account_id):
+    results = []
+    date_string = datetime.strftime(date, DATE_FORMAT)
+    single_result = []
+    query = "SELECT MAX(ambient_light) FROM device_sensors_master WHERE account_id=%s AND local_utc_ts>='%s 00:00:00' AND local_utc_ts<='%s 04:00:00'" % (account_id, date_string, date_string) 
+    with conn_sensors.cursor() as cursor:
+        cursor.execute(query)
+        rows = cursor.fetchall()
+    results = rows
+    return results
+
 def run_alg(days, dbscan_params, account_id):
     eps_multi = dbscan_params['eps_multi']
     min_eps = dbscan_params['min_eps']
@@ -126,6 +137,12 @@ def run_alg(days, dbscan_params, account_id):
 
     if len(days) < limit_filter:
         logging.warn("not_enough_days=%d limit_filter=%d account_id=%d alg_id=%s", len(days), limit_filter, account_id, alg_id)
+        return np.asarray([])
+
+    #Check that user was home last night
+    max_lux_target_date = pull_max_lux_data(conn_sensors, now, account_id)
+    if max_lux_target_date[0][0] < 50:
+        logging.warn("max_lux_target_date=%d", max_lux_target_date[0][0])
         return np.asarray([])
 
     matrix = feature_extraction(days)
