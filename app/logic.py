@@ -138,12 +138,6 @@ def run_alg(days, dbscan_params, account_id):
         logging.warn("not_enough_days=%d limit_filter=%d account_id=%d alg_id=%s", len(days), limit_filter, account_id, alg_id)
         return np.asarray([])
 
-    #Check that user was home last night
-    max_lux_target_date = pull_max_lux_data(conn_sensors, now, account_id)
-    if max_lux_target_date[0][0] < 50:
-        logging.warn("max_lux_target_date=%d", max_lux_target_date[0][0])
-        return np.asarray([])
-
     matrix = feature_extraction(days)
     if not matrix:
         logging.error("error=no_feature_extracted")
@@ -205,6 +199,13 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
     limit = 30
 
     now = datetime.now()
+
+    #Check that user was home last night
+    max_lux_target_date = pull_max_lux_data(conn_sensors, now, account_id)
+    if max_lux_target_date[0][0] < 50:
+        logging.warn("skip_reason=user_not_home max_lux_target_date=%d account_id=%d", max_lux_target_date[0][0], account_id)
+        return True 
+
     now_date_string = datetime.strftime(now, DATE_FORMAT)
     now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
     thirty_days_ago = now + timedelta(days=-limit)
