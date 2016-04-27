@@ -93,12 +93,11 @@ def pull_data(conn_sensors, account_id, start):
     with conn_sensors.cursor() as cursor:
         try:
             cursor.execute("""SELECT SUM(ambient_light), count(1), date_trunc('hour', local_utc_ts) AS hour
-                                FROM (SELECT MAX(ambient_light) AS ambient_light, local_utc_ts
+                                FROM (SELECT ambient_light AS ambient_light, local_utc_ts
                                     FROM prod_sense_data
                                     WHERE account_id = %(account_id)s
                                     AND local_utc_ts > %(start)s
-                                    AND extract('hour' from local_utc_ts) < 6
-                                    GROUP BY local_utc_ts)
+                                    AND extract('hour' from local_utc_ts) < 6)
                                 GROUP BY hour
                                 ORDER BY hour ASC""", dict(account_id=account_id, start=start))
             rows = cursor.fetchall()
@@ -115,6 +114,17 @@ def pull_data(conn_sensors, account_id, start):
     else:
         logging.info("one_data_length=%d" % len(results))
     
+    return results
+
+def pull_max_lux_data(conn_sensors, date, account_id):
+    results = []
+    date_string = datetime.strftime(date, DATE_FORMAT)
+    single_result = []
+    query = "SELECT MAX(ambient_light) FROM device_sensors_master WHERE account_id=%s AND local_utc_ts>='%s 00:00:00' AND local_utc_ts<='%s 04:00:00'" % (account_id, date_string, date_string) 
+    with conn_sensors.cursor() as cursor:
+        cursor.execute(query)
+        rows = cursor.fetchall()
+    results = rows
     return results
 
 def run_alg(days, dbscan_params, account_id):
@@ -189,6 +199,13 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
     limit = 30
 
     now = datetime.now()
+
+    #Check that user was home last night
+    max_lux_target_date = pull_max_lux_data(conn_sensors, now, account_id)
+    if max_lux_target_date[0][0] < 50:
+        logging.warn("skip_reason=user_not_home max_lux_target_date=%d account_id=%d", max_lux_target_date[0][0], account_id)
+        return True 
+
     now_date_string = datetime.strftime(now, DATE_FORMAT)
     now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
     thirty_days_ago = now + timedelta(days=-limit)
