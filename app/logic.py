@@ -203,7 +203,10 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
     #Check that user was home last night
     max_lux_target_date = pull_max_lux_data(conn_sensors, now, account_id)
     if max_lux_target_date[0][0] < 50:
-        logging.warn("skip_reason=user_not_home max_lux_target_date=%d account_id=%d", max_lux_target_date[0][0], account_id)
+        if max_lux_target_date[0][0]==None:
+            logging.warn("skip_reason=user_not_home max_lux_target_date=None account_id=%d", account_id)
+        else:
+            logging.warn("skip_reason=user_not_home max_lux_target_date=%d account_id=%d", max_lux_target_date[0][0], account_id)
         return True 
 
     now_date_string = datetime.strftime(now, DATE_FORMAT)
