@@ -120,7 +120,7 @@ def pull_max_lux_data(conn_sensors, date, account_id):
     results = []
     date_string = datetime.strftime(date, DATE_FORMAT)
     single_result = []
-    query = "SELECT MAX(ambient_light) FROM device_sensors_master WHERE account_id=%s AND local_utc_ts>='%s 00:00:00' AND local_utc_ts<='%s 04:00:00'" % (account_id, date_string, date_string) 
+    query = "SELECT MAX(ambient_light) FROM prod_sense_data WHERE account_id=%s AND local_utc_ts>='%s 00:00:00' AND local_utc_ts<='%s 04:00:00'" % (account_id, date_string, date_string) 
     with conn_sensors.cursor() as cursor:
         cursor.execute(query)
         rows = cursor.fetchall()
