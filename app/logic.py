@@ -13,7 +13,7 @@ from sklearn.cluster import DBSCAN
 
 
 from transformations import from_db_rows
-from anomalyDAO import write_anomaly_result, write_anomaly_result_raw
+from anomalyDAO import write_anomaly_result, write_anomaly_result_raw, write_anomaly_skip_reason
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ def chunks(l, n):
         yield l[i:i+n]
 
 DATE_FORMAT = '%Y-%m-%d'
+SKIP_ID = {'user_not_home_max_none':1, 'user_not_home':2, 'no_data':3, 'no_day_complete_data':4, 'not_enough_data_target_date':5}
 
 def get_active_accounts(conn, isodd):
     hour_in_millis = 3600000
@@ -166,6 +167,10 @@ def get_anomaly_days(sorted_days, labels, account_id):
             logging.info("anom_date=%s account_id=%d", day, account_id)
     return anomaly_days
 
+def write_skip(conn_anomaly, account_id, now_start_of_day, skip_id):
+    write_success = write_anomaly_skip_reason(conn_anomaly, account_id, now_start_of_day, skip_id)
+    return write_success
+
 def write_results(conn_anomaly, account_id, now_start_of_day, dbscan_params, anomaly_days):
     alg_id = dbscan_params['alg_id']
     max_anom_density = dbscan_params['max_anom_density']
@@ -199,30 +204,34 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
     limit = 30
 
     now = datetime.now()
+    now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
 
     #Check that user was home last night
     max_lux_target_date = pull_max_lux_data(conn_sensors, now, account_id)
     if max_lux_target_date[0][0] < 50:
         if max_lux_target_date[0][0]==None:
             logging.warn("skip_reason=user_not_home max_lux_target_date=None account_id=%d", account_id)
+            write_skip(conn_anomaly, account_id, now_start_of_day, SKIP_ID['user_not_home_max_none'])
         else:
             logging.warn("skip_reason=user_not_home max_lux_target_date=%d account_id=%d", max_lux_target_date[0][0], account_id)
+            write_skip(conn_anomaly, account_id, now_start_of_day, SKIP_ID['user_not_home'])
         return True 
 
     now_date_string = datetime.strftime(now, DATE_FORMAT)
-    now_start_of_day = now.replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0)
     thirty_days_ago = now + timedelta(days=-limit)
 
     results = pull_data(conn_sensors, account_id, thirty_days_ago)
 
     if not results:
         logging.warn("skip_reason=no_data account_id=%d", account_id)
+        write_skip(conn_anomaly, account_id, now_start_of_day, SKIP_ID['no_data'])
         return True 
 
     days = from_db_rows(results)
 
     if len(days) == 0:
         logging.warn("skip_reason=results_pulled_but_no_day_complete_data account_id=%d", account_id)
+        write_skip(conn_anomaly, account_id, now_start_of_day, SKIP_ID['no_day_complete_data'])
         return True 
 
     sorted_days = sorted(days.keys())
@@ -232,7 +241,9 @@ def run(account_id, conn_sensors, conn_anomaly, dbscan_params_meta, questions_en
         earliest_day = sorted_days[0]
         latest_day = sorted_days[-1]
         logging.warn("skip_reason=not_enough_data_target_date target_date=%s account_id=%d num_days_extracted=%d extract_start=%s extrat_end=%s", now, account_id, num_days, earliest_day, latest_day)
+        write_skip(conn_anomaly, account_id, now_start_of_day, SKIP_ID['not_enough_data_target_date'])
         return True 
+
 
     for param_index in dbscan_params_meta:
         dbscan_params = dbscan_params_meta[param_index]

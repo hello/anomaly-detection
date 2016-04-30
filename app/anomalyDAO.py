@@ -78,6 +78,40 @@ def write_anomaly_result_raw(conn, account_id, target_date, anomaly_days, alg_id
         conn.rollback()
     return False
 
+def write_anomaly_skip_reason(conn, account_id, target_date, skip_id):
+    """
+    input:  - connection conn
+            - int or string account_id
+            - datetime target_date
+            - int or string (of int) skip_id
+
+    output: 
+            - boolean - successful insert or not 
+    """
+    account_id = str(account_id)
+    skip_id = str(skip_id)
+
+    try:
+        with conn.cursor() as cur:
+            query = cur.mogrify("INSERT INTO anomaly_skip (account_id, target_date, skip_reason) VALUES (%s, %s, %s) RETURNING id", 
+                                (account_id, target_date, skip_id))
+#            logging.info("query: %s", query)
+            cur.execute(query)
+            inserted_row = cur.fetchone()
+
+            conn.commit()
+
+            if inserted_row:
+                row_id = int(inserted_row[0])
+#                logging.info("Success insertion into anomaly_skip for account_id=%s target_date=%s row_id=%s.", account_id, target_date, row_id)
+                return True
+
+    except psycopg2.Error as error:
+        logging.error("Fail insertion into anomaly_skip for account_id=%s target_date=%s psycopg2 error=%s." 
+                    %(account_id, target_date, error))
+        conn.rollback()
+    return False
+
 def get_num_anomalies_date(conn, date_computed, target_date, alg_id):
     alg_id = str(alg_id)
 

@@ -36,3 +36,14 @@ CREATE TABLE anomaly_alg(
 );
 
 /* alg_params = "{alg: DBSCAN, feature: ambient_light, num_buckets: 3, eps_multi: 1.5, min_eps: 2, min_pts:4}" */
+
+CREATE TABLE anomaly_skip(
+    id BIGSERIAL PRIMARY KEY,
+    account_id BIGINT,
+    date_computed TIMESTAMP DEFAULT current_timestamp,
+    target_date TIMESTAMP,
+    skip_reason INTEGER
+);
+
+CREATE UNIQUE INDEX uniq_anomaly_skip ON anomaly_skip(account_id, DATE_TRUNC('day', date_computed), target_date);
+
