@@ -41,7 +41,7 @@ def get_active_accounts(conn, isodd):
     account_ids = set()
     with conn.cursor() as cursor:
         isodd = str(isodd)
-        cursor.execute("""SELECT DISTINCT(account_id), MAX(offset_millis) FROM tracker_motion_master WHERE local_utc_ts > %(start)s AND MOD(account_id,2)=%(odd)s GROUP BY account_id ORDER BY account_id;""", dict(start=recent_days, odd=isodd))
+        cursor.execute("""SELECT DISTINCT(account_id), MAX(offset_millis) FROM prod_pill_data WHERE local_utc_ts > %(start)s AND MOD(account_id,2)=%(odd)s GROUP BY account_id ORDER BY account_id;""", dict(start=recent_days, odd=isodd))
 
         rows = cursor.fetchall()
         logging.info("active_accounts=%d", len(rows))
